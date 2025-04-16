@@ -1,0 +1,97 @@
+<?php
+
+//Created by ESL!!!
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\Elements\AbstractXrefElement;
+use Fisharebest\Webtrees\Elements\XrefSource;
+use Fisharebest\Webtrees\Gedcom;
+use Fisharebest\Webtrees\GedcomRecord;
+use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Registry;
+use Fisharebest\Webtrees\Source;
+use Fisharebest\Webtrees\Tree;
+
+/**
+ * @var string $gedcom
+ * @var string $parent e.g. "INDI:BIRT:DATE"
+ * @var Tree   $tree
+ */
+
+$hierarchy = explode(':', $parent);
+
+// Merge CONT records onto their parent line.
+$gedcom = preg_replace('/\n\d CONT ?/', "\r", $gedcom);
+
+preg_match_all('/^(\d+) (\w+) ?(.*)/m', $gedcom, $matches);
+[, $levels, $tags, $values] = $matches;
+$levels   = array_map(static fn (string $x): int => (int) $x, $levels);
+$keys     = array_keys($levels);
+$elements = [];
+
+$private_level = PHP_INT_MAX;
+
+foreach ($keys as $key) {
+    $hierarchy[$levels[$key]] = $tags[$key];
+    $full_tag                 = implode(':', array_slice($hierarchy, 0, 1 + $levels[$key]));
+    $elements[$key]           = Registry::elementFactory()->make($full_tag);
+
+    if ($elements[$key] instanceof AbstractXrefElement && preg_match('/^@(' . Gedcom::REGEX_XREF . ')@$/', $values[$key], $match) === 1) {
+        $record = Registry::gedcomRecordFactory()->make($match[1], $tree);
+
+        if ($record instanceof GedcomRecord && !$record->canShow()) {
+            $private_level = min($private_level, $levels[$key]);
+        }
+    }
+
+    $value = strtr($values[$key], ["\r" => "\n"]);
+
+    if ($levels[$key] >= $private_level) {
+        $values[$key] = '';
+    } else {
+        $private_level = PHP_INT_MAX;
+    }
+}
+
+$emptyimg='<div class="pe-1 pb-1 wt-media-link-image"><div class="d-flex align-items-center wt-media-link"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" width="40" height="50" alt="" /></div></div>';
+?>
+
+<?php if(empty($keys)) : ?>
+    <?= $emptyimg ?>
+<?php endif; ?>
+
+<?php
+foreach ($keys as $key) : ?>
+    <?php if ($values[$key] !== '') : 
+
+        // Show the image instead of the label.
+        if (preg_match('/^@(' . Gedcom::REGEX_XREF . ')@$/', $value, $match) === 1) {
+            $media = Registry::mediaFactory()->make($match[1], $tree);
+
+            if ($media !== null) {
+                $media_file = $media->mediaFiles()->first();
+
+                if ($media_file !== null) {
+
+                    $label = $media_file->displayImage(40, 50, 'crop', ['class' => 'wt-chart-box-thumbnail']);
+        
+                    $label_html = '<div class="pe-1 pb-1 wt-media-link-image">' . $label . '</div>';
+                    $value_html = '<div class="wt-media-link-title">' . '</div>';
+
+                    echo '<div class="d-flex align-items-center wt-media-link">' . $label_html . $value_html . '</div>';
+                } else {
+                    echo $emptyimg;
+                }
+            } else {
+                echo $emptyimg;
+            }
+        } else {
+            echo $emptyimg;
+        }
+
+    else :
+        echo $emptyimg;
+    endif;
+endforeach
+?>

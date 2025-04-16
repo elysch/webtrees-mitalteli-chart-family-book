@@ -1,0 +1,338 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\Auth;
+use Fisharebest\Webtrees\Fact;
+use Fisharebest\Webtrees\Gedcom;
+use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Individual;
+use Fisharebest\Webtrees\Menu;
+use Fisharebest\Webtrees\Module\ModuleChartInterface;
+use Fisharebest\Webtrees\Registry;
+use Fisharebest\Webtrees\Services\ModuleService;
+use Illuminate\Support\Collection;
+
+/**
+ * @var Individual|null   $individual
+ * @var ModuleService     $module_service
+ * @var Collection|Menu[] $menus
+ * @var bool              $full_places
+ * @var bool              $extra_images
+ */
+
+if (!isset($full_places)) {
+    $full_places = false;
+error_log("NNNNNNOOOOOOO ESTÁ DEFINIDO full_places ---------------------------------------------");
+}
+
+if (!isset($extra_images)) {
+    $extra_images = false;
+}
+
+if ($individual === null) {
+    echo '<div class="wt-chart-box"></div>';
+
+    return;
+}
+
+$module_service = app(ModuleService::class);
+
+$menus = $module_service->findByComponent(ModuleChartInterface::class, $individual->tree(), Auth::user())->map(static function (ModuleChartInterface $module) use ($individual): ?Menu {
+    return $module->chartBoxMenu($individual);
+})->filter();
+
+foreach ($individual->spouseFamilies() as $family) {
+    $menus->push(new Menu('<strong>' . I18N::translate('Family with spouse') . '</strong>', $family->url()));
+    $spouse  = $family->spouse($individual);
+    if ($spouse && $spouse->canShow()) {
+        $menus->push(new Menu($spouse->fullName(), $spouse->url()));
+    }
+    foreach ($family->children() as $child) {
+        if ($child->canShow()) {
+            $menus->push(new Menu($child->fullName(), $child->url()));
+        }
+    }
+}
+
+// Do not show these facts in the expanded chart boxes.
+$exclude = [
+    'FAM:CHAN',
+    'FAM:CHIL',
+    'FAM:HUSB',
+    'FAM:NOTE',
+    'FAM:OBJE',
+    'FAM:RESN',
+    'FAM:SOUR',
+    'FAM:WIFE',
+    'INDI:ADDR',
+    'INDI:ALIA',
+    'INDI:ASSO',
+    'INDI:CHAN',
+    'INDI:EMAIL',
+    'INDI:FAMC',
+    'INDI:FAMS',
+    'INDI:NAME',
+    'INDI:NOTE',
+    'INDI:OBJE',
+    'INDI:PHON',
+    'INDI:RESI',
+    'INDI:RESN',
+    'INDI:SEX',
+    'INDI:SOUR',
+    'INDI:SSN',
+    'INDI:SUBM',
+    'INDI:TITL',
+    'INDI:URL',
+    'INDI:WWW',
+    'INDI:_EMAIL',
+    'INDI:_TODO',
+    'INDI:_UID',
+    'INDI:_WT_OBJE_SORT'
+];
+
+/** @var Collection|Fact[] $all_facts */
+$all_facts = $individual->facts();
+foreach ($individual->spouseFamilies() as $family) {
+    foreach ($family->facts() as $fact) {
+        $all_facts->push($fact);
+    }
+}
+
+$all_facts = $all_facts->filter(static function (Fact $fact) use ($exclude): bool {
+    return !in_array($fact->tag(), $exclude, true);
+});
+
+$all_facts = Fact::sortFacts($all_facts);
+
+$id = Registry::idFactory()->id();
+?>
+
+<div class="wt-chart-box wt-chart-box-<?= strtolower($individual->sex()) ?> <?= $individual->isPendingAddition() ? 'wt-new' : '' ?> <?= $individual->isPendingDeletion() ? 'wt-old' : '' ?> overflow-hidden" data-wt-chart-xref="<?= e($individual->xref()) ?>" data-tree="<?= e($individual->tree()->name()) ?>"><!-- cc -->
+    <?php if ($individual->canShow() && $individual->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES')) : ?>
+        <div class="wt-chart-box-thumbnail float-start me-1">
+            <?= $individual->displayImage(40, 50, 'crop', ['class' => 'wt-chart-box-thumbnail']) ?>
+        </div>
+    <?php endif ?>
+
+    <?php if ($individual->canShow()) : ?>
+        <div class="wt-chart-box-extra d-print-none float-end ms-1">
+            <div class="dropdown position-static wt-chart-box-zoom">
+                <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-zoom-<?= $id ?>" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div ><?= view('icons/zoom-in') ?></div>
+                    <div class="d-none"><?= view('icons/zoom-out') ?></div>
+                    <span class="visually-hidden"><?= I18N::translate('Links') ?></span>
+                </a>
+
+                <div class="dropdown-menu dropdown-menu-end wt-chart-box-dropdown wt-chart-box-zoom-dropdown" style="position: inherit" aria-labelledby="#chart-box-zoom-<?= $id ?>">
+                    <?php foreach ($all_facts as $fact) : ?>
+                        <?php if($full_places) : ?>
+                            <?php $summaryStr = $fact->summary(); ?>
+                            <?php $summaryPlace = $fact->place()->shortName(); ?>
+                            <?php $fullPlace = $fact->place()->fullName(); ?>
+                            <?= str_replace($summaryPlace, $fullPlace, $summaryStr) ?>
+                        <?php else : ?>
+                            <?= $fact->summary() ?>
+                        <?php endif; ?>
+                    <?php endforeach ?>
+                </div>
+            </div>
+
+            <div class="dropdown position-static wt-chart-box-links">
+                <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-menu-<?= $id ?>" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="icon-pedigree" title="<?= I18N::translate('Links') ?>"></i>
+                    <span class="visually-hidden"><?= I18N::translate('Links') ?></span>
+                </a>
+
+                <div class="dropdown-menu dropdown-menu-end wt-chart-box-dropdown wt-chart-box-links-dropdown" style="position: inherit" aria-labelledby="#chart-box-menu-<?= $id ?>">
+                    <?php foreach ($menus as $menu) : ?>
+                        <a class="dropdown-item p-1 <?= e($menu->getClass()) ?>" href="<?= e($menu->getLink()) ?>">
+                            <?= $menu->getLabel() ?>
+                        </a>
+                    <?php endforeach ?>
+                </div>
+            </div>
+        </div>
+    <?php endif ?>
+
+
+    <?php
+        $factIconsArray = array();
+        $out = "";
+    
+        $out .= '<div class="wt-chart-box-facts">';
+        $out .= '    <div class="wt-chart-box-fact small">';
+            
+        $opt_tags = preg_split('/\W/', $individual->tree()->getPreference('CHART_BOX_TAGS'), 0, PREG_SPLIT_NO_EMPTY);
+
+
+        // Show BIRT or equivalent event
+        foreach (Gedcom::BIRTH_EVENTS as $birttag) {
+            if (!in_array($birttag, $opt_tags, true)) {
+                if ($extra_images and $individual->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES')) {
+                    foreach ($individual->facts([$birttag]) as $factIcon) {
+                        if ($factIcon instanceof Fact and $factIcon->canShow()) {
+                            if (preg_match_all('/\n(2 OBJE\b.*(?:\n[^2].*)*)/', $factIcon->gedcom(), $matches, PREG_SET_ORDER) > 0) {
+                                $media = $matches[0][1];
+                                $arrayTmp = array(
+                                    'media' => $media,
+                                    'tag'   => $birttag,
+                                    'tree'  => $factIcon->record()->tree(),
+                                );
+                                $factIconsArray[] = $arrayTmp;
+                                break;
+                            }
+                        }
+                    }
+                }  # SHOW_HIGHLIGHT_IMAGES
+                $event = $individual->facts([$birttag])->first();
+                if ($event instanceof Fact) {
+                    if($full_places) {
+                        $summaryStr = $event->summary();
+                        $summaryPlace = $event->place()->shortName();
+                        $fullPlace = $event->place()->fullName();
+                        $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
+                    } else {
+                        $out .= $event->summary();
+                    }
+                    break;
+                }
+            }
+        }
+        // Show optional events (before death)
+        foreach ($opt_tags as $key => $tag) {
+            if (!in_array($tag, Gedcom::DEATH_EVENTS, true)) {
+                if ($extra_images and $individual->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES') and in_array($tag, Gedcom::BIRTH_EVENTS, true)) {
+                    foreach ($individual->facts([$tag]) as $factIcon) {
+                        if ($factIcon instanceof Fact and $factIcon->canShow()) {
+                            if (preg_match_all('/\n(2 OBJE\b.*(?:\n[^2].*)*)/', $eventIcon->gedcom(), $matches, PREG_SET_ORDER) > 0) {
+                                $media = $matches[0][1];
+                                $arrayTmp = array(
+                                    'media' => $media,
+                                    'tag'   => $tag,
+                                    'tree'  => $eventIcon->record()->tree(),
+                                );
+                                $eventIconsArray[] = $arrayTmp;
+                                break;
+                            }
+                        }
+                    }
+                }  # SHOW_HIGHLIGHT_IMAGES
+                $event = $individual->facts([$tag])->first();
+                if ($event instanceof Fact) {
+                    if($full_places) {
+                        $summaryStr = $event->summary();
+                        $summaryPlace = $event->place()->shortName();
+                        $fullPlace = $event->place()->fullName();
+                        $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
+                    } else {
+                        $out .= $event->summary();
+                    }
+                    unset($opt_tags[$key]);
+                }
+            }
+        }
+        // Show DEAT or equivalent event
+        foreach (Gedcom::DEATH_EVENTS as $deattag) {
+            if ($extra_images and $individual->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES')) {
+                foreach ($individual->facts([$deattag]) as $factIcon) {
+                    if ($factIcon instanceof Fact and $factIcon->canShow()) {
+                        if (preg_match_all('/\n(2 OBJE\b.*(?:\n[^2].*)*)/', $factIcon->gedcom(), $matches, PREG_SET_ORDER) > 0) {
+                            $media = $matches[0][1];
+                            $arrayTmp = array(
+                                'media' => $media,
+                                'tag'   => $deattag,
+                                'tree'  => $factIcon->record()->tree(),
+                            );
+                            $factIconsArray[] = $arrayTmp;
+                            break;
+                        }
+                    }
+                }
+            }  # SHOW_HIGHLIGHT_IMAGES
+
+            $event = $individual->facts([$deattag])->first();
+            if ($event instanceof Fact) {
+                if($full_places) {
+                    $summaryStr = $event->summary();
+                    $summaryPlace = $event->place()->shortName();
+                    $fullPlace = $event->place()->fullName();
+                    $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
+                } else {
+                    $out .= $event->summary();
+                }
+                if (in_array($deattag, $opt_tags, true)) {
+                    unset($opt_tags[array_search($deattag, $opt_tags, true)]);
+                }
+                break;
+            }
+        }
+        // Show remaining optional events (after death)
+        foreach ($opt_tags as $tag) {
+            if ($extra_images
+                and $individual->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES')
+                and (in_array($tag, Gedcom::BIRTH_EVENTS, true)
+                        or in_array($tag, Gedcom::DEATH_EVENTS, true)
+                    )
+               ) {
+                foreach ($individual->facts([$tag]) as $factIcon) {
+                    if ($factIcon instanceof Fact and $factIcon->canShow()) {
+                        if (preg_match_all('/\n(2 OBJE\b.*(?:\n[^2].*)*)/', $factIcon->gedcom(), $matches, PREG_SET_ORDER) > 0) {
+                            $media = $matches[0][1];
+                            $arrayTmp = array(
+                                'media' => $media,
+                                'tag'   => $tag,
+                                'tree'  => $factIcon->record()->tree(),
+                            );
+                            $factIconsArray[] = $arrayTmp;
+                            break;
+                        }
+                    }
+                }
+            }  # SHOW_HIGHLIGHT_IMAGES
+            $event = $individual->facts([$tag])->first();
+            if ($event instanceof Fact) {
+                if($full_places) {
+                    $summaryStr = $event->summary();
+                    $summaryPlace = $event->place()->shortName();
+                    $fullPlace = $event->place()->fullName();
+                    $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
+                } else {
+                    $out .= $event->summary();
+                }
+            }
+        }
+    ?>
+
+        <?php if ($extra_images) : ?>
+            <div class="wt-chart-box-thumbnail float-end me-1">
+            <?php foreach ($factIconsArray as $iconElement) : ?>
+                <div class="wt-chart-box-thumbnail float-start me-1">
+                    <?= view($module . '::chart-box-icon-only', ['gedcom' => $iconElement['media'], 'parent' => $iconElement['tag'], 'tree' => $iconElement['tree']]) ?>
+                </div>
+            <?php endforeach ?>
+            </div>
+        <?php endif; ?>
+
+    <?php
+        $out .= '   </div>';
+        $out .= '</div>';
+    ?>
+    <div class="wt-chart-box-name">
+        <?php if ($individual->canShow()) : ?>
+            <a href="<?= e($individual->url()) ?>"><?= $individual->fullName() ?></a>
+        <?php else : ?>
+            <?= $individual->fullName() ?>
+        <?php endif ?>
+    </div>
+
+    <div class="wt-chart-box-name wt-chart-box-name-alt">
+        <?= $individual->alternateName() ?>
+    </div>
+
+    <div class="wt-chart-box-lifespan">
+        <?= $individual->lifespan() ?>
+    </div>
+
+    <?= $out ?>
+</div><!-- cc -->

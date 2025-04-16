@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\Family;
+use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Individual;
+use Illuminate\Support\Collection;
+
+/**
+ * @var int        $book_size
+ * @var int        $generations
+ * @var Individual $individual
+ * @var bool       $spouses
+ * @var bool       $marriages
+ * @var bool       $fullPlace
+ * @var bool       $extra_images
+ */
+
+$children = $individual->spouseFamilies()->map(static function (Family $family): Collection {
+    return $family->children();
+})->flatten();
+
+?>
+
+<style type="text/css">
+    <?php if ($extra_images) : ?>
+    .wt-chart-family-book .wt-chart-box {width:26rem; height:auto; min-height:50px; padding:4px; margin:2px;}
+    <?php else : ?>
+    .wt-chart-family-book .wt-chart-box {width:25rem; height:auto; min-height:50px; padding:4px; margin:2px;}
+    <?php endif; ?>
+</style>
+
+<h3><?= I18N::translate('Family of %s', $individual->fullName()) ?></h3>
+
+<div class="d-flex wt-chart-family-book"><!-- aa -->
+    <?= view($module . '::modules/mitalteli-family-book-chart/children', ['children' => $children, 'generations' => $book_size - 1, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+    <div class="align-self-center">
+        <?= view($module . '::chart-box', ['individual' => $individual, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+        <?php if ($spouses) : ?>
+            <?php foreach ($individual->spouseFamilies() as $family) : ?>
+
+                <?php if ($spouses and $marriages) : ?>
+                    <?= view($module . '::chart-box-marriage', ['family' => $family, 'full_places' => $full_places, 'module' => $module]) ?>
+                <?php endif ?>
+
+                <?= view($module . '::chart-box', ['individual' => $family->spouse($individual), 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+            <?php endforeach ?>
+        <?php endif ?>
+    </div>
+    <div class="wt-chart-horizontal-spacer">
+        <div class="wt-chart-horizontal-line"></div>
+    </div>
+    <?= view($module . '::modules/mitalteli-family-book-chart/parents', ['generations' => $book_size - 1, 'family' => $individual->childFamilies()->first(), 'spouses' => $spouses, 'marriages' => $marriages, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+</div><!-- aa -->
+
+<?php if ($generations > 1) : ?><!-- bb -->
+    <?php foreach ($children as $child) : ?>
+        <hr class="wt-family-separator">
+        <?= view($module . '::modules/mitalteli-family-book-chart/chart', ['individual' => $child, 'generations' => $generations - 1, 'book_size' => $book_size, 'spouses' => $spouses, 'marriages' => $spouses and $marriages, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ; ?>
+    <?php endforeach ?><!-- bb -->
+<?php endif ?>

@@ -1,0 +1,870 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\I18N;
+use Fisharebest\Webtrees\Individual;
+use Fisharebest\Webtrees\Tree;
+
+/**
+ * @var string     $ajax_url
+ * @var int        $book_size
+ * @var int        $generations
+ * @var Individual $individual
+ * @var int        $maximum_book_size
+ * @var int        $minimum_book_size
+ * @var int        $maximum_generations
+ * @var int        $minimum_generations
+ * @var bool       $spouses
+ * @var bool       $marriages #ESL!!!
+ * @var bool       $full_places #ESL!!!
+ * @var bool       $extra_images #ESL!!!
+ * @var string     $title
+ * @var Tree       $tree
+ */
+
+?>
+<style id="fbk_tools_1">
+    /* Se utiliza visibility: hidden para que al ser mostrada la imágen conserve su posición. Con display: none agrega un salto de renglón innecesario e indeseable */
+    #workingimage { visibility: hidden; }
+    /*.col-sm-9.wt-page-options-value.pdf_options { display: none; }*/
+    .row.mb-3.pdf_options { display: none; position: relative; z-index: 1; left: 10px; width: 100%; height: 100%; padding: 20px; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }
+    /*.row.mb-3.pdf_options { visibility: hidden; position: fixed; z-index: 1; left: 0; left: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }*/
+    .pdf_options_contents {  background-color: #fefefe; margin-left: 10px; padding: 20px; border: 1px solid #888; width: 90%; text-align: center;}
+    .pdf_options_contents_inside {  text-align: center;}
+</style>
+
+<script id="fbk_tools_2" language="JavaScript" type="text/javascript" src="https://cdn.jsdelivr.net/gh/jquery/jquery-dist/dist/jquery.min.js"></script>
+
+<script id="fbk_tools_3" language="JavaScript" type="text/javascript">
+
+    var claseBaseOriginal = ".wt-ajax-load.wt-page-content.wt-chart.wt-chart-family-book";
+    var claseBase = claseBaseOriginal;
+    //var claseOpcionesPdf = ".col-sm-9.wt-page-options-value.pdf_options";
+    var claseOpcionesPdf = ".row.mb-3.pdf_options";
+
+    // https://stackoverflow.com/a/30106551
+    // Encoding UTF-8 ⇢ base64
+    
+    function b64EncodeUnicode(str) {
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+            return String.fromCharCode(parseInt(p1, 16))
+        }))
+    }
+    
+    // Decoding base64 ⇢ UTF-8
+    
+    function b64DecodeUnicode(str) {
+        return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        }).join(''))
+    }
+
+    function downloadFile(p_blob, p_filename) {
+                        //console.log("INSIDE downloadFile BEGIN");
+        if (p_blob.size>0) {
+            var a = document.body.appendChild(
+                document.createElement("a")
+            );
+            ////var print_contents = $(p_div_classes)[0].innerHTML;
+            //var print_contents = $(p_div_classes)[0].outerHTML;
+            var url = URL.createObjectURL(p_blob);
+            a.download = p_filename;
+            a.href = url;
+            a.click();
+            setTimeout(()=>{
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                delete a;
+            },100);
+            //document.body.removeChild(a);
+        } else {
+            console.log("downloadFile: p_blob is empty!");
+        }
+                        //console.log("INSIDE downloadFile END");
+    }
+
+    /**
+     * Wait until all images are downloaded and encoded.
+     * https://stackoverflow.com/a/74391321/2796922
+     */
+    //export const waitForImages = async () => {
+    const waitForImages = async () => {
+        // Get only images in view - this is a Workaround for lazy loading images
+        const images = Array.from(await document.getElementsByTagName('img'));
+        const imageLoadPromisses = Array.from(images).map(
+            (image) =>
+                new Promise((resolve) => {
+                    if (image.complete) {
+                        return resolve();
+                    }
+                    // fallback timeout to prevent freezing the entire test
+                    const timeout = setTimeout(() => {
+                        console.log("timeout", image);
+                        resolve();
+                    }, 2000);
+                    const cleanup = () => {
+                        clearTimeout(timeout);
+                        image.removeEventListener("load", imageLoadingDone);
+                        image.removeEventListener("error", imageLoadingDone);
+                    };
+                    const imageLoadingDone = () => {
+                        cleanup();
+                        image
+                            .decode()
+                            .catch(() => {
+                                /* ignore decoding erros */
+                            })
+                            .then(resolve);
+                    };
+                    image.addEventListener("load", imageLoadingDone);
+                    image.addEventListener("error", imageLoadingDone);
+                })
+        );
+        // wait until all images are loaded
+        await Promise.all(imageLoadPromisses);
+        return images;
+    };
+
+    /////////////////////////////
+    // https://stackoverflow.com/a/64503524/2796922
+    var convert = function (oldImag,callback) {
+        return new Promise(function (resolve, reject) {
+            var img = new Image();
+            img.onload = function(){
+                callback(img)
+            }
+            img.setAttribute('crossorigin', 'anonymous');
+            img.src = oldImag.src;
+            //console.log("IMAGE BEING PROCESSED: convert");
+          
+            resolve("Stuff worked!");
+        });
+    };
+    var getBase64Image = function (img,callback) {
+        return new Promise(function (resolve, reject) {
+            convert(img, function(newImg){
+                var newImg = img;
+                var canvas = document.createElement("canvas");
+                //console.log("IMAGE BEING PROCESSED: getBase64Image");
+                canvas.width = newImg.width;
+                canvas.height = newImg.height;
+                var ctx = canvas.getContext("2d");
+                ctx.drawImage(newImg, 0, 0);
+                var base64=canvas.toDataURL("image/png");
+                callback(base64)
+                resolve("Stuff worked 2!");
+            });
+        });
+    };
+    /////////////////////////////
+
+//    var image_urls_conversion = [];
+    function embedImages() {
+        //promise1
+        return new Promise(function (resolve, reject){
+            waitForImages;
+    
+            var allImages = document.getElementsByTagName('img');
+            var allImagesList = Array.prototype.slice.call(allImages);
+    
+            const promises = [];
+            const imagesToProcess = [];
+            //console.log("BEFORE A");
+            allImagesList.forEach(function (imgTmp, index, ar) {
+                //console.log("allImagesList.forEach");
+                if(typeof imgTmp !== 'undefiend' && typeof imgTmp.src !== 'undefined' ) {
+                    if (!imgTmp.src.startsWith("data") && !imgTmp.src.startsWith("about")) {
+                        promises.push(
+                            getBase64Image(imgTmp,function(base64){
+
+                                /* REPLACE ALL OCURRENCES OF SAME IMAGE'S URL */
+                                /* USE CSS BACKGROUND IMAGE TO PREVENT MULTIPLE COPIES OF THE SAME IMAGE */
+                                //console.log("getBase64Image: ASIGNACION BASE64 ENCUENTRO [" + index + "]");
+                                //alert("getBase64Image: ASIGNACION BASE64 ENCUENTRO [" + index + "]");
+                                var originalUrl = (' ' + imgTmp.src).slice(1); //This code works by appending a space to the front of the string. This concatenation results in a string copy in Chrome's implementation. Then the substring after the space can be referenced.
+                                
+                                
+//                                { /* CSS BACKGROUND IMAGES BEGIN */
+//                                    var alreadyStoredUrlConversion = image_urls_conversion.find(({ url }) => url === originalUrl);
+//                                    if (! alreadyStoredUrlConversion) {
+//                                        if (!originalUrl.startsWith("data") && !originalUrl.startsWith("about")) {
+//                                            var urlCssClassName = "graph_img_bkg";
+//                                            if (imgTmp.alt === null || imgTmp.alt.match(/^ *$/) !== null) {
+//                                                // ALT TEXT IS EMPTY 
+//                                            } else {
+//                                                // remove special characters from alt text
+//                                                var newString = imgTmp.alt.replace(/[^A-Z0-9]+/ig, "_");
+//                                                urlCssClassName = urlCssClassName + "-" + newString;
+//                                            }
+//                                            var cssClassTmp = (' ' + urlCssClassName).slice(1); //This code works by appending a space to the front of the string. This concatenation results in a string copy in Chrome's implementation. Then the substring after the space can be referenced.
+//                                            var cntTmp = 1;
+//                                            while (image_urls_conversion.find(({ id }) => id === cssClassTmp)) {
+//                                                cssClassTmp = urlCssClassName + "-" + cntTmp;
+//                                                cntTmp = cntTmp +1;
+//                                            }
+//                                            urlCssClassName = cssClassTmp;
+//                                            image_urls_conversion.push({ url: originalUrl, cssClass: urlCssClassName });
+//        
+//                                            var cssBackgroundImageClass = " ." + urlCssClassName + " { display: block; -moz-box-sizing: border-box; box-sizing: border-box; background: url(" + base64 + ") no-repeat; width: 40px; height: 50px; } ";
+//                                            document.getElementsByTagName('style')[0].innerHTML += "\n" + cssBackgroundImageClass;
+//                                        }
+//                                    }
+//                                } /* CSS BACKGROUND IMAGES END */
+
+                                allImagesList.forEach(function (imgTmp2, index2, ar2) {
+                                    if(   typeof imgTmp2 !== 'undefiend' && 
+                                          typeof imgTmp2.src !== 'undefined' && 
+                                          (!imgTmp2.src.startsWith("data") && !imgTmp2.src.startsWith("about")) &&
+                                          imgTmp2.src === originalUrl ) {
+                                        imgTmp2.src = base64;
+                                        imgTmp2.removeAttribute("srcset");
+//                                        //imgTmp2.src = "about:blank";
+//                                        imgTmp2.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // empty image
+//                                        //imgTmp2.parent().title = imgTmp2.alt;   #The title attribute of a div serves as alt in an image
+//                                        imgTmp2.alt = "";
+//                                        //imgTmp2.srcset = "about:blank";
+//                                        imgTmp2.srcset = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // empty image
+//                                        //imgTmp2.addClass(urlCssClassName);
+//                                        //imgTmp2.image.classList.add(urlCssClassName);
+//                                        imgTmp2.className += " " + urlCssClassName;
+                                        //console.log("getBase64Image: ASIGNACION BASE64 [" + index + " - " +index2 + ": " + imgTmp2.alt + "]");
+                                        //alert("getBase64Image: ASIGNACION BASE64 [" + index + " - " + index2 + ": " + imgTmp2.alt + "]");
+                                    }
+                                });
+
+                            })
+                        );
+                    }
+                }
+            });
+            Promise.all(promises).then(data => {
+                resolve();
+            });
+        });
+    }
+
+    //https://www.reddit.com/r/javascript/comments/27bcao/anyone_have_a_method_for_finding_all_the_hidden/
+    function removeHiddenNodes(root) {
+      var nodeIterator, node,
+          hiddenNodes = [],
+          i = 0;
+      nodeIterator = document.createNodeIterator(root, NodeFilter.SHOW_ELEMENT, function(node) {
+        var nodeName = node.nodeName.toLowerCase();
+        if (nodeName === "script" || nodeName === "style" || nodeName === "noscript") {
+          return NodeFilter.FILTER_REJECT;
+        }
+        if (node.offsetParent === void 0) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+        var computedStyle = window.getComputedStyle(node, null);
+        if (computedStyle.getPropertyValue("visibility") === "hidden" || computedStyle.getPropertyValue("display") === "none") {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      while ((node = nodeIterator.nextNode()) && ++i) {
+        if (node.parentNode instanceof HTMLElement) {
+          node.parentNode.removeChild(node);
+        }
+      }
+      console.log("%s nodes removed", i);
+    }
+
+    function cssAttributesBackupAndHideForPrinting(p_div_classes) {
+        var cssPrefixesMapForBackup = [                                      
+          'scale',                                                
+          '-webkit-transform',                                    
+          '-moz-transform',
+          '-ms-transform',
+          '-o-transform',
+          'transform',
+
+          "visibility",
+          "float",
+          "overflow",
+          "padding",
+          "width",
+          "border",
+          "position",
+          "marginLeft",
+          "marginTop",
+          "marginRight",
+          "marginBottom",
+          "top",
+          "left",
+
+          "display",
+          "position"
+        ];
+
+        var cssAttributesBackup = {};
+    
+        cssPrefixesMapForBackup.forEach(function (prefix) {
+            cssAttributesBackup[prefix] = $(p_div_classes).css(prefix);
+        });
+
+        $('body').css("visibility", "hidden");
+        $(p_div_classes).css("visibility","visible");
+
+        <!-- https://www.appnovation.com/blog/how-avoid-your-web-printing-page-being-cut -->
+        $(p_div_classes).css("float","none");
+        $(p_div_classes).css("overflow","visible");
+        $(p_div_classes).css("padding","0");
+        $(p_div_classes).css("width","auto");
+        $(p_div_classes).css("border","0");
+
+        <!-- https://stackoverflow.com/a/6505172/2796922 -->
+        $(p_div_classes).css("position","absolute");
+        $(p_div_classes).css("marginLeft","20px");
+        $(p_div_classes).css("marginTop","20px");
+        $(p_div_classes).css("marginRight","20px");
+        $(p_div_classes).css("marginBottom","20px");
+        $(p_div_classes).css("top","0");
+        $(p_div_classes).css("left","0");
+
+        return cssAttributesBackup;
+    }
+
+    function cssAttributesRestoreAndShowAfterPrinting(p_div_classes, p_cssAttributesBackup) {
+        var keys = Object.keys(p_cssAttributesBackup);
+        keys.forEach(function (prefix) {
+            $(p_div_classes).css(prefix, p_cssAttributesBackup[prefix]);
+        });
+
+        $('body').css("visibility", "visible");    
+    }
+
+    function getCSS(element) {
+        let css_data = '';
+        let css_obj = getComputedStyle(element);
+
+        for (let i = 0; i < css_obj.length; i++) {
+            css_data +=
+                css_obj[i] + ':' +
+                css_obj.getPropertyValue(css_obj[i])
+                + ';';
+        }
+        return css_data;
+    }
+
+function dumpCSSText(element){
+  var s = '';
+  var o = getComputedStyle(element);
+  for(var i = 0; i < o.length; i++){
+    s+=o[i] + ':' + o.getPropertyValue(o[i])+';';
+  }
+  return s;
+}
+
+function applyStyle(el) {
+    s = getComputedStyle(el);
+
+    for (let key in s) {
+        let prop = key.replace(/\-([a-z])/g, v => v[1].toUpperCase());
+        el.style[prop] = s[key];
+    }
+}
+
+    function transferComputedStyle(node) {
+        //https://stackoverflow.com/a/25098011/2796922
+        var cs = getComputedStyle(node, null);
+        var i;
+        //const permittedStyles = ["background", "border-block-end", "border-block-start", "border-color", "border-radius", "border-style", "border-width", 
+//        const permittedStyles = ["border-block-end", "border-block-start", "border-color", "border-radius", "border-style", "border-width", 
+//                                 "border-collapse", "border-end-end-radius", "border-end-start-radius", "border-image", "border-inline-end",
+//                                 "border-inline-start", "border-start-end-radius", "border-start-start-radius", "color", "columns", "empty-cells", ];
+        const permittedStylesTcPdfExamples = ["width", "height", "background-color", "border-radius", "margin-right", "border-right", "font-family", "font-size", 
+                                 "border-left", "border-top", "border-bottom", "color", "border", "border-style", "border-width", "border-color",
+                                 "text-align", "text-transform", "text-decoration", "font-style", "font-weight", ];
+        const permittedStylesNeeded = [
+                                 "border-block-end", "border-block-start", "border-end-end-radius", "border-end-start-radius", "border-start-end-radius", 
+                                 "border-start-start-radius", "border-inline-start", "border-inline-end" 
+                                      ];
+        const permittedStyles = permittedStylesTcPdfExamples.concat(permittedStylesNeeded);
+        for (i = 0; i < cs.length; i++) {
+            if (permittedStyles.includes(cs[i])) {
+            var s = cs[i] + "";
+              node.style[s] = cs[s];
+            }
+        }
+    }
+    function transferAll() {
+        //https://stackoverflow.com/a/25098011/2796922
+        var all = document.getElementsByTagName("*");
+        var i;
+        for (i = 0; i < all.length; i++) {
+            console.log('embedCSSInEachElement ANTES: ' + all[i].style.cssText);
+            transferComputedStyle(all[i]);
+            console.log('embedCSSInEachElement DESPUES: ' + all[i].style.cssText);
+        }
+    }
+
+    function createOnceFunctionEmbedCSSInEachElement() {
+        let hasBeenCalled = false;
+    
+        return function (p_dom, p_reset = false) {
+            if (p_reset) {
+                hasBeenCalled = false;
+                return;
+            }
+
+
+            if (!hasBeenCalled) {
+                console.log(`ENTROOOOO embedCSSInEachElement`);
+                hasBeenCalled = true;
+            
+                var all = p_dom.getElementsByTagName("*");
+                var i;
+                for (i = 0; i < all.length; i++) {
+                    console.log('embedCSSInEachElement ANTES: ' + all[i].style.cssText);
+                    transferComputedStyle(all[i]);
+                    console.log('embedCSSInEachElement DESPUES: ' + all[i].style.cssText);
+                }
+            } else {
+                console.log('Function embedCSSInEachElement can only be called once.');
+            }
+        }
+    }
+    
+    // Create the once function for embeding external CSS files
+    const embedCSSInEachElement = createOnceFunctionEmbedCSSInEachElement();
+
+
+    // Function that returns a once function
+    function createOnceFunctionEmbedCSS() {
+        let hasBeenCalled = false;
+    
+        return function (p_dom, p_reset = false) {
+            if (p_reset) {
+                hasBeenCalled = false;
+                return;
+            }
+
+            if (!hasBeenCalled) {
+                console.log(`ENTROOOOO embedCSS`);
+                hasBeenCalled = true;
+                var stylesArray = [];
+                var stylesArrayEmbedded = [];
+                for (var sheet of p_dom.styleSheets) {	
+                    for (let i in [...p_dom.styleSheets]){
+                        try{
+                            if (p_dom.styleSheets[i].href) {
+                                let alreadyConsidered = stylesArray.some(function(item) {
+                                  return item.href === p_dom.styleSheets[i].href
+                                });
+                                if (!alreadyConsidered) {
+                                    const mainCSS = p_dom.styleSheets[i].cssRules; // (CSSRuleList) (I take the first link in this example)
+                                    let mainCSSText = '';
+                                    [...mainCSS].forEach(rule => mainCSSText += rule.cssText);
+                                    stylesArray.push({href: p_dom.styleSheets[i].href, text : mainCSSText});
+                                    //console.log(mainCSSText)
+                                }
+                            }
+                        }catch(e){
+                            console.log(e);
+                        }
+                    }
+                    stylesArray.forEach(function (styleText, index, ar) {
+                        let alreadyEmbedded = stylesArrayEmbedded.includes(styleText.href.trim());
+                        if (!alreadyEmbedded) {
+                            var titleTmp = "/* embedCSS: " + styleText.href.trim() + " */";
+                            console.log('embedCSS inserted: ' + titleTmp);
+                            p_dom.getElementsByTagName('style')[0].innerHTML += "\n" + titleTmp + "\n" + styleText.text;
+                            stylesArrayEmbedded.push(styleText.href.trim());
+                        }
+                    });
+                }
+            } else {
+                console.log('Function embedCSS can only be called once.');
+            }
+        };
+    }
+    
+    // Create the once function for embeding external CSS files
+    const embedCSS = createOnceFunctionEmbedCSS();
+
+
+    function PrintDiv(p_div_classes, p_output_type = "") {
+        $('#workingimage').css('visibility', 'visible');
+        waitForImages;
+    
+        var cssAttributesBackup = {};
+        cssAttributesBackup = cssAttributesBackupAndHideForPrinting(p_div_classes);
+        $('#workingimage').css('visibility', 'hidden');
+        window.print();
+        cssAttributesRestoreAndShowAfterPrinting(p_div_classes, cssAttributesBackup);
+    }
+
+    function DownloadDiv(p_div_classes, p_output_type = "") {
+
+        var cssAttributesBackup = {};
+        p_output_type = p_output_type.toLowerCase();
+        //alert('paso por aqui. p_output_type es: [' + p_output_type + ']');
+
+        var print_contents = "";
+        if ((p_output_type === 'html') || (p_output_type === 'pdf')) {
+            $('#workingimage').css('visibility', 'visible');
+            embedImages().then(data=>{
+        
+                cssAttributesBackup = cssAttributesBackupAndHideForPrinting(p_div_classes);
+
+                { /* GET CSS */
+                    if (p_output_type === 'html') {
+                        embedCSS(document);
+                    } else if (p_output_type === 'pdf') {
+                        embedCSSInEachElement(document);
+                    }
+                } /* GET CSS */
+
+
+                print_contents = document.documentElement.outerHTML;
+                var parsedHTML = new DOMParser().parseFromString(print_contents, 'text/html');
+
+                { /* REMOVE UNNEEDED STUF FROM HTML */
+                    // Remove working image
+                    var q = parsedHTML.getElementById('workingimage');
+                    while (q.hasChildNodes()) {
+                      q.removeChild(q.firstChild);
+                    }
+
+
+                    ////
+                    // REMOVE ELEMENTS WITH ID STARTING WITH fbk_tools
+                    var r = parsedHTML.querySelectorAll("[id^=fbk_tools]");
+                    
+                    for (var i = (r.length-1); i >= 0; i--) {
+                        r[i].parentNode.removeChild(r[i]);
+                    }
+                    ////
+
+                    ////// I don't remove all JS, because stops working the special reports and extra information when download in html format
+                    //// REMOVE JS SCRIPTS 
+                    //var r = parsedHTML.getElementsByTagName('script');
+                    //
+                    //for (var i = (r.length-1); i >= 0; i--) {
+                    //    r[i].parentNode.removeChild(r[i]);
+                    //}
+                    //////
+
+
+                    ////
+                    // REMOVE LINK TAGS
+                    var r = parsedHTML.getElementsByTagName('link');
+                    
+                    for (var i = (r.length-1); i >= 0; i--) {
+                        r[i].parentNode.removeChild(r[i]);
+                    }
+                    ////
+
+
+                    ////
+                    // REMOVE FORMS
+                    var r = parsedHTML.getElementsByTagName('form');
+                    
+                    for (var i = (r.length-1); i >= 0; i--) {
+                        r[i].parentNode.removeChild(r[i]);
+                    }
+                    ////
+
+
+                    ////
+                    // REMOVE header
+                    var r = parsedHTML.getElementsByTagName('header');
+                    
+                    for (var i = (r.length-1); i >= 0; i--) {
+                        r[i].parentNode.removeChild(r[i]);
+                    }
+                    ////
+
+
+                    ////
+                    // REMOVE footer
+                    var r = parsedHTML.getElementsByTagName('footer');
+                    
+                    for (var i = (r.length-1); i >= 0; i--) {
+                        r[i].parentNode.removeChild(r[i]);
+                    }
+                    ////
+
+
+                    removeHiddenNodes(parsedHTML);
+
+
+                    [].forEach.call(
+                        parsedHTML.querySelectorAll('body *'), 
+                        function(element){
+                            var elementDisplay = element.currentStyle ? element.currentStyle.display : getComputedStyle(element, null).display;
+                            if (elementDisplay === 'none') {
+                                element.parentNode.removeChild(element);
+                            }
+                        }
+                    );
+                    
+                    
+//                    [].forEach.call(
+//                        parsedHTML.querySelectorAll('body *'), 
+//                        function(element){
+//                            if (element.offsetWidth <= 0 && element.offsetHeight <= 0) {
+//                                element.parentNode.removeChild(element);
+//                            }
+//                        }
+//                    );
+
+
+                    //testEmbeddedImages(parsedHTML);
+
+                } /* REMOVE UNNEEDED STUF FROM HTML */
+
+                print_contents = parsedHTML.documentElement.outerHTML;
+
+                $('#workingimage').css('visibility', 'hidden');
+
+                var d = new Date;
+                timestamp = [d.getFullYear(),
+                           ("00"+(d.getMonth()+1)).slice(-2),
+                           ("00"+d.getDate()).slice(-2)].join("-")+"_"+
+                           [("00"+d.getHours()).slice(-2),
+                           ("00"+d.getMinutes()).slice(-2)].join("-");
+                           //("00"+d.getSeconds()).slice(-2)
+               
+                if (p_output_type === 'html') {
+                        //console.log("File download begins");
+                        var blob = new Blob(['\ufeff' + print_contents], {type: "text/html;charset=utf-8;"});
+                        downloadFile(blob, "<?= strip_tags($title) ?>-" + timestamp + ".html");
+                } else if (p_output_type === 'pdf') {
+
+                    var parsedHTML = new DOMParser().parseFromString(print_contents, 'text/html');
+
+//                    { /* GET CSS */
+//                        embedCSSInEachElement(parsedHTML);
+//                    } /* GET CSS */
+
+                    { /* REMOVE UNNEEDED STUF FROM PDF */
+    
+                        ////
+                        // REMOVE dropdown
+                        var r = parsedHTML.getElementsByClassName('dropdown');
+                        
+                        for (var i = (r.length-1); i >= 0; i--) {
+                            r[i].parentNode.removeChild(r[i]);
+                        }
+                        ////
+    
+                        ////
+                        // REMOVE JS SCRIPTS 
+                        var r = parsedHTML.getElementsByTagName('script');
+                        
+                        for (var i = (r.length-1); i >= 0; i--) {
+                            r[i].parentNode.removeChild(r[i]);
+                        }
+                        ////
+    
+                    } /* REMOVE UNNEEDED STUF FROM PDF */
+
+                    print_contents = parsedHTML.documentElement.outerHTML;
+
+                    var base64str = b64EncodeUnicode(print_contents);
+                    //alert('paso por aqui. contents:' + print_contents);
+                    //alert('base64:' + base64str);
+                    //document.getElementById("hiddenprintcontent").value = base64str;
+               
+                    //https://stackoverflow.com/a/27563953/2796922
+                    $.ajax({
+                        type: "POST",
+                        responseType: "arraybuffer",
+                        xhrFields: {
+                          responseType: 'blob',
+                          withCredentials: true,
+                        },
+                        url: "<?= e($ajax_url) ?>",
+                        data: {
+                               "hiddenprintcontent":base64str, 
+                               "paper_size":$("select[name=paper_size]").val(),
+                               "paper_orientation":$('input[name=paper_orientation]:checked', '.wt-page-options.wt-page-options-family-book-chart.d-print-none').val(),
+                               },
+                        beforeSend: function(){
+                            $('#workingimage').css('visibility', 'visible');
+                        },
+                        complete: function(){
+                            $('#workingimage').css('visibility', 'hidden');
+                        },
+                        success:function(blob){
+                            downloadFile(blob, "<?= strip_tags($title) ?>-" + timestamp + ".pdf");
+                        },
+                        error: function(xhr, ajaxOptions, thrownError){
+                            alert("aj: " + xhr.status);
+//                            jsonValue = jQuery.parseJSON( xhr.responseText );
+//                            console.log(jsonValue.Message);
+//                            alert("aj: " + xhr.status + " - " + jsonValue.Message);
+                        },
+                        timeout: 600000,
+                    });
+                }
+                cssAttributesRestoreAndShowAfterPrinting(p_div_classes, cssAttributesBackup);
+            });
+        } else {
+            //p_output_type = "";
+            console.log("p_output_type desconocido ["+p_output_type+"]");
+        }
+    };
+    
+    function toggleShowHide(p_classStr) {
+    //    if ($(p_classStr).css("visibility") == "hidden") {
+    //        $(p_classStr).css('visibility', 'visible');
+    //    } else {
+    //        $(p_classStr).css('visibility', 'hidden');
+    //    }
+        //var modal = document.getElementsByClassName(p_classStr)[0];
+        var modal = $(p_classStr)[0];
+        if ($(p_classStr).is(":visible")) {
+            //$(p_classStr).hide();
+            modal.style.display = "none";
+        } else {
+            //$(p_classStr).show();
+            modal.style.display = "block";
+        }
+    }
+    
+    function displayPrintOptions()
+    {
+        $(".col-sm-9.wt-page-options-value.pdf_options").show;
+    }
+    
+    function hidePrintOptions()
+    {
+        $(".col-sm-9.wt-page-options-value.pdf_options").hide;
+    }
+
+    function testEmbeddedImages(elem) { /* TEST EMBEDED IMAGES */
+        var allImagesTEST = elem.getElementsByTagName('img');
+        var allImagesTESTList = Array.prototype.slice.call(allImagesTEST);
+        var BreakException = {};
+        var testtest = 1;
+        
+        try {
+            //console.log("BEFORE A");
+            allImagesTESTList.forEach(function (imgTEST, indexTEST, arTEST) {
+                //console.log("allImagesTESTList.forEach");
+                if(typeof imgTEST !== 'undefiend' && typeof imgTEST.src !== 'undefined' ) {
+                    if (testtest < 5) {
+                        alert("TEST: IMAGEN: [" + indexTEST + ": " + imgTEST.alt + " | " + imgTEST.src + "]");
+                        //testtest=false;
+                    }
+                    if (!imgTEST.src.startsWith("data") && !imgTEST.src.startsWith("about")) {
+                        alert("TEST: hay imágenes con url's todavia, no se reemplazaron todas por data: [" + indexTEST + ": " + imgTEST.alt + " | " + imgTEST.src + "]");
+                        throw BreakException;
+                    }
+                    testtest = testtest + 1;
+                }
+            });
+        } catch (e) {
+          if (e !== BreakException) throw e;
+        }
+        alert("TEST: terminó la validación de imágenes todavía con URL en vez de data");
+    } /* TEST EMBEDED IMAGES */
+
+    // Escuchar cuando se presione cualquier tecla (o combinación)
+    // Recibir evento como parámetro
+    $(document).bind('keydown', function (e) {
+        // Verificar que se pulsó la tecla CTRL (en Windows) o ⌘ (en MAC)
+        if (e.ctrlKey || e.metaKey) {
+            // Analizar las combinaciones permitidas en el proyecto
+            if(String.fromCharCode(e.which).toLowerCase() === 'p') {
+                PrintDiv(claseBase, /*p_output_type*/ "");
+                return false;
+                //console.log( 'Presionaste CTRL + P' );
+            } else if(String.fromCharCode(e.which).toLowerCase() === 'l') {
+                //console.log( 'Presionaste CTRL + L' );
+            }
+        }
+        return true;
+    });
+
+</script>
+
+<h2 class="wt-page-title">
+    <?= $title ?>
+</h2>
+
+<form method="post" class="wt-page-options wt-page-options-family-book-chart d-print-none">
+    <div class="row">
+        <label class="col-sm-3 col-form-label wt-page-options-label" for="xref">
+            <?= I18N::translate('Individual') ?>
+        </label>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/select-individual', ['name' => 'xref', 'individual' => $individual, 'tree' => $tree, 'required' => true]) ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="col-sm-3 col-form-label wt-page-options-label" for="book_size">
+            <?= I18N::translate('Generations') ?>
+        </label>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/select-number', ['name' => 'book_size', 'selected' => $book_size, 'options' => range($minimum_book_size, $maximum_book_size)]) ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="col-sm-3 col-form-label wt-page-options-label" for="generations">
+            <?= I18N::translate('Descendant generations') ?>
+        </label>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/select-number', ['name' => 'generations', 'selected' => $generations, 'options' => range($minimum_generations, $maximum_generations)]) ?>
+        </div>
+    </div>
+
+    <fieldset class="row mb-3">
+        <legend class="col-form-label col-sm-3 wt-page-options-label">
+            <?= I18N::translate('Spouses') ?>
+        </legend>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/checkbox', ['label' => I18N::translate('Show spouses'), 'name' => 'spouses', 'checked' => $spouses]) ?>
+        </div>
+        <legend class="col-form-label col-sm-3 wt-page-options-label"> <!-- ESL!!! --!>
+            <?= I18N::translate('Marriages') ?> <!-- ESL!!! --!>
+        </legend>
+        <div class="col-sm-9 wt-page-options-value"> <!-- ESL!!! --!>
+            <?= view('components/checkbox', ['label' => I18N::translate('Show marriages'), 'name' => 'marriages', 'checked' => $marriages]) ?>
+        </div>
+        <legend class="col-form-label col-sm-3 wt-page-options-label"> <!-- ESL!!! --!>
+            <?= I18N::translate('Show full places') ?> <!-- ESL!!! --!>
+        </legend>
+        <div class="col-sm-9 wt-page-options-value"> <!-- ESL!!! --!>
+            <?= view('components/checkbox', ['label' => I18N::translate('Show full places'), 'name' => 'full_places', 'checked' => $full_places]) ?>
+        </div>
+        <legend class="col-form-label col-sm-3 wt-page-options-label"> <!-- ESL!!! --!>
+            <?= I18N::translate('Extra images') ?> <!-- ESL!!! --!>
+        </legend>
+        <div class="col-sm-9 wt-page-options-value"> <!-- ESL!!! --!>
+            <?= view('components/checkbox', ['label' => I18N::translate('Show extra images'), 'name' => 'extra_images', 'checked' => $extra_images]) ?>
+        </div>
+    </fieldset>
+
+    <div class="row mb-3">
+        <div class="col-sm-3 wt-page-options-label"></div>
+        <div class="col-sm-9 wt-page-options-value">
+            <input class="btn btn-primary" type="submit" value="<?= /* I18N: A button label. */ I18N::translate('view') ?>" onclick="embedCSS(document, true); submit(); ">
+            <input id="print" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('print') #ESL!!! 20240522 ?>" onclick="PrintDiv(claseBase, /*p_output_type*/ '')">
+            <input id="html" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('html') #ESL!!! 20240725 ?>" onclick="DownloadDiv(claseBase, /*p_output_type*/ 'html')">
+            <input id="show_pdf_options" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('pdf') #ESL!!! 20240725 ?>" onclick="toggleShowHide(claseOpcionesPdf)"> 
+            <img id="workingimage" src="data:image/gif;base64,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">
+        </div>
+    </div>
+    <div class="row mb-3 pdf_options">
+        <div class="pdf_options_contents">
+        <div class="pdf_options_contents_inside">
+        <div class="col-sm-3 wt-page-options-label">PDF Options</div>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/select', ['name' => 'paper_size', 'id' => 'paper_size', 'selected' => 'LETTER', 'options' => ['A3' => /* I18N: A button label. */ I18N::translate('A3 (297mm x 420mm)'), 'A4' => /* I18N: A button label. */ I18N::translate('A4 (210mm x 297mm)'), 'LETTER' => /* I18N: A button label. */ I18N::translate('LETTER (8.5" x 11")'), 'LEGAL' => /* I18N: A button label. */ I18N::translate('LEGAL (8.5" x 14")')]]) ?>
+            <?= view('components/radios-inline', ['name' => 'paper_orientation', 'options' => ['P' => /* I18N: A button label. */ I18N::translate('portrait'), 'L' => /* I18N: A button label. */ I18N::translate('landscape')], 'selected' => 'L']) ?><br>
+            <input id="download_pdf" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('download') #ESL!!! 20240725 ?>" onclick="DownloadDiv(claseBase, /*p_output_type*/ 'pdf')"> 
+        </div>
+        </div>
+        </div>
+    </div>
+
+    <?= csrf_field() ?>
+</form>
+
+<div class="wt-ajax-load wt-page-content wt-chart wt-chart-family-book" data-wt-ajax-url="<?= e($ajax_url) ?>"></div><!-- ajax -->

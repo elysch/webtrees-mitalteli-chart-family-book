@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\Family;
+
+/**
+ * @var Family|null $family
+ * @var int         $generations
+ * @var bool        $spouses #ESL!!!
+ * @var bool        $marriages #ESL!!!
+ * @var bool        $full_places #ESL!!!
+ * @var bool        $extra_images #ESL!!!
+ */
+
+?>
+<div class="d-flex">
+    <div class="align-self-center">
+        <div class="d-flex">
+            <div class="wt-chart-horizontal-spacer">
+                <div class="wt-chart-horizontal-first-parent"></div>
+            </div>
+
+            <div class="align-self-center">
+                <?= view($module . '::chart-box', ['individual' => $family ? $family->husband() : null, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+            </div>
+
+            <?php if ($generations > 1) : ?>
+                <div class="wt-chart-horizontal-spacer">
+                    <div class="wt-chart-horizontal-line"></div>
+                </div>
+
+                <?= view($module . '::modules/mitalteli-family-book-chart/parents', ['family' => $family && $family->husband() ? $family->husband()->childFamilies()->first() : null, 'generations' => $generations - 1, 'spouses' => $spouses, 'marriages' => $marriages, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+            <?php endif ?>
+        </div>
+
+        <?php if ($spouses and $marriages and $family !== null and $family->facts(['MARR']) !== null and !$family->facts(['MARR'])->isEmpty()) : ?>
+
+            <style type="text/css">
+                .wt-chart-vertical-parent-marriage{height:100%;border-left:thin solid gray;border-left:var(--chart-line)}
+                .wt-chart-horizontal-parent-marriage{height:50%;border-bottom: var(--chart-line)}
+            </style>
+    
+            <div class="d-flex">
+                <div class="wt-chart-horizontal-spacer">
+                    <div class="wt-chart-vertical-parent-marriage">
+                        <div class="wt-chart-horizontal-parent-marriage"></div>
+                    </div>
+                </div>
+                            <div class="align-self-center"><?= view($module . '::chart-box-marriage', ['family' => $family, 'full_places' => $full_places, 'module' => $module]) ?></div>
+            </div>
+
+        <?php endif #ESL!!! ?>
+<?php /*ESL!!!*/ ?>    
+
+        <div class="d-flex">
+            <div class="wt-chart-horizontal-spacer">
+                <div class="wt-chart-horizontal-last-parent"></div>
+            </div>
+
+            <div class="align-self-center">
+                <?= view($module . '::chart-box', ['individual' => $family ? $family->wife() : null, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+            </div>
+
+            <?php if ($generations > 1) : ?>
+                <div class="wt-chart-horizontal-spacer">
+                    <div class="wt-chart-horizontal-line"></div>
+                </div>
+
+                <?= view($module . '::modules/mitalteli-family-book-chart/parents', ['family' => $family && $family->wife() ? $family->wife()->childFamilies()->first() : null, 'generations' => $generations - 1, 'spouses' => $spouses, 'marriages' => $marriages, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+            <?php endif ?>
+        </div>
+    </div>
+</div>
+
