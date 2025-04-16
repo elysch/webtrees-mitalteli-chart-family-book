@@ -56,9 +56,8 @@ $css = "
 // Aplicar el estilo CSS y renderizar el HTML al PDF
 $pdf->writeHTML($css . $html, true, false, true, false, '');
 
-            error_log("FamilyBookChartModuleGenPdf.php BBBBBBBBBBBBB\r\n");
 $errores = ob_get_contents();
-error_log("#########/r/n".$errores."/r/n#########");
+error_log("#########/r/nErrors:/r/n".$errors."/r/n#########");
 ob_end_clean();
 
 
