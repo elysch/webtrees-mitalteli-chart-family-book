@@ -2,7 +2,9 @@ Module for webtrees genealogy software. An Enhanced Family Book Chart
 =====================================================================
 
 [![Latest Release](https://img.shields.io/github/release/elysch/webtrees-mitalteli-chart-family-book.svg)][1]
+[![webtrees major version](https://img.shields.io/badge/webtrees-v2.0.x-green)][2]
 [![webtrees major version](https://img.shields.io/badge/webtrees-v2.1.x-green)][2]
+[![webtrees major version](https://img.shields.io/badge/webtrees-v2.2.x-green)][2]
 [![Downloads](https://img.shields.io/github/downloads/elysch/webtrees-mitalteli-chart-family-book/total.svg)]()
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?business=EU37HN97QD9EU&no_recurring=0&currency_code=MXN)
