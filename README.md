@@ -17,7 +17,9 @@ Installation & upgrading
 ------------------------
 Unpack the zip file and place the mitalteli-chart-family-book folder in the modules_v4 folder of webtrees. Upload the newly added folder to your server. It is activated by default and will work immediately. No additional configuration is required.
 
-*NOTE: The directory name must have a maximum length of 30 characters.*
+*NOTE 1: To generate a pdf you can use print function and select "Save as PDF", then specify a scale percentage in "more options". With Chrome and Edge browsers on Windows OS, 47% has worked fine for me when showing 5 generations horizontaly and setting landscape US Letter page.*
+
+*NOTE 2: The directory name must have a maximum length of 30 characters.*
 
 
 Bugs & feature requests

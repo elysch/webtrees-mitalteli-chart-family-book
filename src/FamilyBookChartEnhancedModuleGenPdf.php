@@ -1,44 +1,42 @@
 <?php
-// Incluir la librería TCPDF
+// Include TCPDF library
 require_once(__DIR__.'/../../vendor/tecnickcom/tcpdf/examples/tcpdf_include.php');
-
 
 # ModSecurity: Request body no files data length is larger than the configured limit (131072)
 ini_set('memory_limit', '8192M');
 
 /**
- * Clase personalizada que extiende TCPDF para manejar configuraciones específicas.
+ * Personalized class to extend TCPDF in order to add specific configurations
  */
 class MYPDF extends TCPDF {
-    // Espacio para añadir configuraciones específicas si es necesario
+    // Place where specific configurations should be.
 }
 
-// Crear una nueva instancia de la clase MYPDF
+// Create a new MYPDF instance
 $pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-// Configuración del documento PDF
+// PDF document configuration
 $pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('Tu Nombre');
-$pdf->SetTitle('Título del Documento');
-$pdf->SetSubject('Asunto del Documento');
+$pdf->SetAuthor('Your Name');
+$pdf->SetTitle('Document Title');
+$pdf->SetSubject('Document subject');
 $pdf->SetKeywords('TCPDF, PDF, HTML, UTF-8');
 
-// Establecer las configuraciones de la página
+// Page configuration
 $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
 $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
 $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
 $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
 
-// Agregar una página en orientación horizontal (paisaje)
+// Add a landscape page
 $pdf->AddPage('L', 'LETTER');
 
 ob_start();
 
-// Cargar el contenido HTML desde un archivo
-#$html = file_get_contents('/mnt/data/webtrees_LOGGGGGGG.log.html');
+// Load HTML contets from file
 $html = $html_report_content;
 
-// Configurar estilo CSS específico para el PDF
+// Configure specific CSS styles for the PDF
 $css = "
 <style>
     div {
@@ -53,14 +51,14 @@ $css = "
 </style>
 ";
 
-// Aplicar el estilo CSS y renderizar el HTML al PDF
+// Apply CSS stykles and render the HTML to the PDF
 $pdf->writeHTML($css . $html, true, false, true, false, '');
 
 $errores = ob_get_contents();
-error_log("#########/r/nErrors:/r/n".$errors."/r/n#########");
+error_log("#########/r/n".$errores."/r/n#########");
 ob_end_clean();
 
 
-// Cerrar y generar el archivo PDF
+// Generate PDF document and close it
 $pdf->Output('output.pdf', 'D');
 
