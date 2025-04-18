@@ -52,7 +52,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     /**
      * @var string
      */
-    public const CUSTOM_VERSION = '1.0.1';
+    public const CUSTOM_VERSION = '1.0.0';
 
      /**
      * @var string

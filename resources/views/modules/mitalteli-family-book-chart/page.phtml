@@ -16,18 +16,20 @@ use Fisharebest\Webtrees\Tree;
  * @var int        $maximum_generations
  * @var int        $minimum_generations
  * @var bool       $spouses
- * @var bool       $marriages
- * @var bool       $full_places
- * @var bool       $extra_images
+ * @var bool       $marriages #ESL!!!
+ * @var bool       $full_places #ESL!!!
+ * @var bool       $extra_images #ESL!!!
  * @var string     $title
  * @var Tree       $tree
  */
 
 ?>
 <style id="fbk_tools_1">
-    /* Visibility: hidden is used so that the image retains its position when displayed. Display: none adds an unnecessary and undesirable line break. */
+    /* Se utiliza visibility: hidden para que al ser mostrada la imágen conserve su posición. Con display: none agrega un salto de renglón innecesario e indeseable */
     #workingimage { visibility: hidden; }
+    /*.col-sm-9.wt-page-options-value.pdf_options { display: none; }*/
     .row.mb-3.pdf_options { display: none; position: relative; z-index: 1; left: 10px; width: 100%; height: 100%; padding: 20px; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }
+    /*.row.mb-3.pdf_options { visibility: hidden; position: fixed; z-index: 1; left: 0; left: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }*/
     .pdf_options_contents {  background-color: #fefefe; margin-left: 10px; padding: 20px; border: 1px solid #888; width: 90%; text-align: center;}
     .pdf_options_contents_inside {  text-align: center;}
 </style>
@@ -38,6 +40,7 @@ use Fisharebest\Webtrees\Tree;
 
     var claseBaseOriginal = ".wt-ajax-load.wt-page-content.wt-chart.wt-chart-family-book";
     var claseBase = claseBaseOriginal;
+    //var claseOpcionesPdf = ".col-sm-9.wt-page-options-value.pdf_options";
     var claseOpcionesPdf = ".row.mb-3.pdf_options";
 
     // https://stackoverflow.com/a/30106551
@@ -58,10 +61,13 @@ use Fisharebest\Webtrees\Tree;
     }
 
     function downloadFile(p_blob, p_filename) {
+                        //console.log("INSIDE downloadFile BEGIN");
         if (p_blob.size>0) {
             var a = document.body.appendChild(
                 document.createElement("a")
             );
+            ////var print_contents = $(p_div_classes)[0].innerHTML;
+            //var print_contents = $(p_div_classes)[0].outerHTML;
             var url = URL.createObjectURL(p_blob);
             a.download = p_filename;
             a.href = url;
@@ -71,15 +77,18 @@ use Fisharebest\Webtrees\Tree;
                 a.remove();
                 delete a;
             },100);
+            //document.body.removeChild(a);
         } else {
             console.log("downloadFile: p_blob is empty!");
         }
+                        //console.log("INSIDE downloadFile END");
     }
 
     /**
      * Wait until all images are downloaded and encoded.
      * https://stackoverflow.com/a/74391321/2796922
      */
+    //export const waitForImages = async () => {
     const waitForImages = async () => {
         // Get only images in view - this is a Workaround for lazy loading images
         const images = Array.from(await document.getElementsByTagName('img'));
@@ -127,6 +136,7 @@ use Fisharebest\Webtrees\Tree;
             }
             img.setAttribute('crossorigin', 'anonymous');
             img.src = oldImag.src;
+            //console.log("IMAGE BEING PROCESSED: convert");
           
             resolve("Stuff worked!");
         });
@@ -136,6 +146,7 @@ use Fisharebest\Webtrees\Tree;
             convert(img, function(newImg){
                 var newImg = img;
                 var canvas = document.createElement("canvas");
+                //console.log("IMAGE BEING PROCESSED: getBase64Image");
                 canvas.width = newImg.width;
                 canvas.height = newImg.height;
                 var ctx = canvas.getContext("2d");
@@ -148,6 +159,7 @@ use Fisharebest\Webtrees\Tree;
     };
     /////////////////////////////
 
+//    var image_urls_conversion = [];
     function embedImages() {
         //promise1
         return new Promise(function (resolve, reject){
@@ -160,6 +172,7 @@ use Fisharebest\Webtrees\Tree;
             const imagesToProcess = [];
             //console.log("BEFORE A");
             allImagesList.forEach(function (imgTmp, index, ar) {
+                //console.log("allImagesList.forEach");
                 if(typeof imgTmp !== 'undefiend' && typeof imgTmp.src !== 'undefined' ) {
                     if (!imgTmp.src.startsWith("data") && !imgTmp.src.startsWith("about")) {
                         promises.push(
@@ -167,9 +180,38 @@ use Fisharebest\Webtrees\Tree;
 
                                 /* REPLACE ALL OCURRENCES OF SAME IMAGE'S URL */
                                 /* USE CSS BACKGROUND IMAGE TO PREVENT MULTIPLE COPIES OF THE SAME IMAGE */
+                                //console.log("getBase64Image: ASIGNACION BASE64 ENCUENTRO [" + index + "]");
+                                //alert("getBase64Image: ASIGNACION BASE64 ENCUENTRO [" + index + "]");
                                 var originalUrl = (' ' + imgTmp.src).slice(1); //This code works by appending a space to the front of the string. This concatenation results in a string copy in Chrome's implementation. Then the substring after the space can be referenced.
                                 
                                 
+//                                { /* CSS BACKGROUND IMAGES BEGIN */
+//                                    var alreadyStoredUrlConversion = image_urls_conversion.find(({ url }) => url === originalUrl);
+//                                    if (! alreadyStoredUrlConversion) {
+//                                        if (!originalUrl.startsWith("data") && !originalUrl.startsWith("about")) {
+//                                            var urlCssClassName = "graph_img_bkg";
+//                                            if (imgTmp.alt === null || imgTmp.alt.match(/^ *$/) !== null) {
+//                                                // ALT TEXT IS EMPTY 
+//                                            } else {
+//                                                // remove special characters from alt text
+//                                                var newString = imgTmp.alt.replace(/[^A-Z0-9]+/ig, "_");
+//                                                urlCssClassName = urlCssClassName + "-" + newString;
+//                                            }
+//                                            var cssClassTmp = (' ' + urlCssClassName).slice(1); //This code works by appending a space to the front of the string. This concatenation results in a string copy in Chrome's implementation. Then the substring after the space can be referenced.
+//                                            var cntTmp = 1;
+//                                            while (image_urls_conversion.find(({ id }) => id === cssClassTmp)) {
+//                                                cssClassTmp = urlCssClassName + "-" + cntTmp;
+//                                                cntTmp = cntTmp +1;
+//                                            }
+//                                            urlCssClassName = cssClassTmp;
+//                                            image_urls_conversion.push({ url: originalUrl, cssClass: urlCssClassName });
+//        
+//                                            var cssBackgroundImageClass = " ." + urlCssClassName + " { display: block; -moz-box-sizing: border-box; box-sizing: border-box; background: url(" + base64 + ") no-repeat; width: 40px; height: 50px; } ";
+//                                            document.getElementsByTagName('style')[0].innerHTML += "\n" + cssBackgroundImageClass;
+//                                        }
+//                                    }
+//                                } /* CSS BACKGROUND IMAGES END */
+
                                 allImagesList.forEach(function (imgTmp2, index2, ar2) {
                                     if(   typeof imgTmp2 !== 'undefiend' && 
                                           typeof imgTmp2.src !== 'undefined' && 
@@ -177,6 +219,17 @@ use Fisharebest\Webtrees\Tree;
                                           imgTmp2.src === originalUrl ) {
                                         imgTmp2.src = base64;
                                         imgTmp2.removeAttribute("srcset");
+//                                        //imgTmp2.src = "about:blank";
+//                                        imgTmp2.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // empty image
+//                                        //imgTmp2.parent().title = imgTmp2.alt;   #The title attribute of a div serves as alt in an image
+//                                        imgTmp2.alt = "";
+//                                        //imgTmp2.srcset = "about:blank";
+//                                        imgTmp2.srcset = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // empty image
+//                                        //imgTmp2.addClass(urlCssClassName);
+//                                        //imgTmp2.image.classList.add(urlCssClassName);
+//                                        imgTmp2.className += " " + urlCssClassName;
+                                        //console.log("getBase64Image: ASIGNACION BASE64 [" + index + " - " +index2 + ": " + imgTmp2.alt + "]");
+                                        //alert("getBase64Image: ASIGNACION BASE64 [" + index + " - " + index2 + ": " + imgTmp2.alt + "]");
                                     }
                                 });
 
@@ -316,6 +369,10 @@ function applyStyle(el) {
         //https://stackoverflow.com/a/25098011/2796922
         var cs = getComputedStyle(node, null);
         var i;
+        //const permittedStyles = ["background", "border-block-end", "border-block-start", "border-color", "border-radius", "border-style", "border-width", 
+//        const permittedStyles = ["border-block-end", "border-block-start", "border-color", "border-radius", "border-style", "border-width", 
+//                                 "border-collapse", "border-end-end-radius", "border-end-start-radius", "border-image", "border-inline-end",
+//                                 "border-inline-start", "border-start-end-radius", "border-start-start-radius", "color", "columns", "empty-cells", ];
         const permittedStylesTcPdfExamples = ["width", "height", "background-color", "border-radius", "margin-right", "border-right", "font-family", "font-size", 
                                  "border-left", "border-top", "border-bottom", "color", "border", "border-style", "border-width", "border-color",
                                  "text-align", "text-transform", "text-decoration", "font-style", "font-weight", ];
@@ -400,6 +457,7 @@ function applyStyle(el) {
                                     let mainCSSText = '';
                                     [...mainCSS].forEach(rule => mainCSSText += rule.cssText);
                                     stylesArray.push({href: p_dom.styleSheets[i].href, text : mainCSSText});
+                                    //console.log(mainCSSText)
                                 }
                             }
                         }catch(e){
@@ -441,6 +499,7 @@ function applyStyle(el) {
 
         var cssAttributesBackup = {};
         p_output_type = p_output_type.toLowerCase();
+        //alert('paso por aqui. p_output_type es: [' + p_output_type + ']');
 
         var print_contents = "";
         if ((p_output_type === 'html') || (p_output_type === 'pdf')) {
@@ -541,6 +600,17 @@ function applyStyle(el) {
                         }
                     );
                     
+                    
+//                    [].forEach.call(
+//                        parsedHTML.querySelectorAll('body *'), 
+//                        function(element){
+//                            if (element.offsetWidth <= 0 && element.offsetHeight <= 0) {
+//                                element.parentNode.removeChild(element);
+//                            }
+//                        }
+//                    );
+
+
                     //testEmbeddedImages(parsedHTML);
 
                 } /* REMOVE UNNEEDED STUF FROM HTML */
@@ -555,13 +625,19 @@ function applyStyle(el) {
                            ("00"+d.getDate()).slice(-2)].join("-")+"_"+
                            [("00"+d.getHours()).slice(-2),
                            ("00"+d.getMinutes()).slice(-2)].join("-");
+                           //("00"+d.getSeconds()).slice(-2)
                
                 if (p_output_type === 'html') {
+                        //console.log("File download begins");
                         var blob = new Blob(['\ufeff' + print_contents], {type: "text/html;charset=utf-8;"});
                         downloadFile(blob, "<?= strip_tags($title) ?>-" + timestamp + ".html");
                 } else if (p_output_type === 'pdf') {
 
                     var parsedHTML = new DOMParser().parseFromString(print_contents, 'text/html');
+
+//                    { /* GET CSS */
+//                        embedCSSInEachElement(parsedHTML);
+//                    } /* GET CSS */
 
                     { /* REMOVE UNNEEDED STUF FROM PDF */
     
@@ -588,6 +664,9 @@ function applyStyle(el) {
                     print_contents = parsedHTML.documentElement.outerHTML;
 
                     var base64str = b64EncodeUnicode(print_contents);
+                    //alert('paso por aqui. contents:' + print_contents);
+                    //alert('base64:' + base64str);
+                    //document.getElementById("hiddenprintcontent").value = base64str;
                
                     //https://stackoverflow.com/a/27563953/2796922
                     $.ajax({
@@ -614,6 +693,9 @@ function applyStyle(el) {
                         },
                         error: function(xhr, ajaxOptions, thrownError){
                             alert("aj: " + xhr.status);
+//                            jsonValue = jQuery.parseJSON( xhr.responseText );
+//                            console.log(jsonValue.Message);
+//                            alert("aj: " + xhr.status + " - " + jsonValue.Message);
                         },
                         timeout: 600000,
                     });
@@ -621,11 +703,18 @@ function applyStyle(el) {
                 cssAttributesRestoreAndShowAfterPrinting(p_div_classes, cssAttributesBackup);
             });
         } else {
+            //p_output_type = "";
             console.log("p_output_type desconocido ["+p_output_type+"]");
         }
     };
     
     function toggleShowHide(p_classStr) {
+    //    if ($(p_classStr).css("visibility") == "hidden") {
+    //        $(p_classStr).css('visibility', 'visible');
+    //    } else {
+    //        $(p_classStr).css('visibility', 'hidden');
+    //    }
+        //var modal = document.getElementsByClassName(p_classStr)[0];
         var modal = $(p_classStr)[0];
         if ($(p_classStr).is(":visible")) {
             //$(p_classStr).hide();
@@ -653,10 +742,13 @@ function applyStyle(el) {
         var testtest = 1;
         
         try {
+            //console.log("BEFORE A");
             allImagesTESTList.forEach(function (imgTEST, indexTEST, arTEST) {
+                //console.log("allImagesTESTList.forEach");
                 if(typeof imgTEST !== 'undefiend' && typeof imgTEST.src !== 'undefined' ) {
                     if (testtest < 5) {
                         alert("TEST: IMAGEN: [" + indexTEST + ": " + imgTEST.alt + " | " + imgTEST.src + "]");
+                        //testtest=false;
                     }
                     if (!imgTEST.src.startsWith("data") && !imgTEST.src.startsWith("about")) {
                         alert("TEST: hay imágenes con url's todavia, no se reemplazaron todas por data: [" + indexTEST + ": " + imgTEST.alt + " | " + imgTEST.src + "]");
@@ -671,18 +763,18 @@ function applyStyle(el) {
         alert("TEST: terminó la validación de imágenes todavía con URL en vez de data");
     } /* TEST EMBEDED IMAGES */
 
-    // Listen when any key (or combination) is pressed
-    // Receive event as a parameter
+    // Escuchar cuando se presione cualquier tecla (o combinación)
+    // Recibir evento como parámetro
     $(document).bind('keydown', function (e) {
-        // Verify that the CTRL key (on Windows) or ⌘ (on MAC) was pressed
+        // Verificar que se pulsó la tecla CTRL (en Windows) o ⌘ (en MAC)
         if (e.ctrlKey || e.metaKey) {
-            // Analyze the combinations allowed in the project
+            // Analizar las combinaciones permitidas en el proyecto
             if(String.fromCharCode(e.which).toLowerCase() === 'p') {
                 PrintDiv(claseBase, /*p_output_type*/ "");
                 return false;
-                //console.log( 'CTRL + P' );
+                //console.log( 'Presionaste CTRL + P' );
             } else if(String.fromCharCode(e.which).toLowerCase() === 'l') {
-                //console.log( 'CTRL + L' );
+                //console.log( 'Presionaste CTRL + L' );
             }
         }
         return true;
@@ -729,22 +821,22 @@ function applyStyle(el) {
         <div class="col-sm-9 wt-page-options-value">
             <?= view('components/checkbox', ['label' => I18N::translate('Show spouses'), 'name' => 'spouses', 'checked' => $spouses]) ?>
         </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Marriages') ?>
+        <legend class="col-form-label col-sm-3 wt-page-options-label"> <!-- ESL!!! --!>
+            <?= I18N::translate('Marriages') ?> <!-- ESL!!! --!>
         </legend>
-        <div class="col-sm-9 wt-page-options-value">
+        <div class="col-sm-9 wt-page-options-value"> <!-- ESL!!! --!>
             <?= view('components/checkbox', ['label' => I18N::translate('Show marriages'), 'name' => 'marriages', 'checked' => $marriages]) ?>
         </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Show full places') ?>
+        <legend class="col-form-label col-sm-3 wt-page-options-label"> <!-- ESL!!! --!>
+            <?= I18N::translate('Show full places') ?> <!-- ESL!!! --!>
         </legend>
-        <div class="col-sm-9 wt-page-options-value">
+        <div class="col-sm-9 wt-page-options-value"> <!-- ESL!!! --!>
             <?= view('components/checkbox', ['label' => I18N::translate('Show full places'), 'name' => 'full_places', 'checked' => $full_places]) ?>
         </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Extra images') ?>
+        <legend class="col-form-label col-sm-3 wt-page-options-label"> <!-- ESL!!! --!>
+            <?= I18N::translate('Extra images') ?> <!-- ESL!!! --!>
         </legend>
-        <div class="col-sm-9 wt-page-options-value">
+        <div class="col-sm-9 wt-page-options-value"> <!-- ESL!!! --!>
             <?= view('components/checkbox', ['label' => I18N::translate('Show extra images'), 'name' => 'extra_images', 'checked' => $extra_images]) ?>
         </div>
     </fieldset>
@@ -753,14 +845,9 @@ function applyStyle(el) {
         <div class="col-sm-3 wt-page-options-label"></div>
         <div class="col-sm-9 wt-page-options-value">
             <input class="btn btn-primary" type="submit" value="<?= /* I18N: A button label. */ I18N::translate('view') ?>" onclick="embedCSS(document, true); submit(); ">
-<span data-tip="This is the text of the tooltip2">
-            <input id="print" class="btn btn-primary" title="<?= I18N::translate('To generate a pdf you can use print function and select &quot;Save as PDF&quot; (in windows), then specify a scale percentage in &quot;more options&quot;. 47&percnt; has worked fine for me when showing 5 generations horizontaly and setting landscape US Letter page, using Chrome and Edge on Windows OS.') ?>" type="button" value="<?= /* I18N: A button label. */ I18N::translate('print') ?>" onclick="PrintDiv(claseBase, /*p_output_type*/ '')">
-</span>
-            <input id="html" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('html') ?>" onclick="DownloadDiv(claseBase, /*p_output_type*/ 'html')">
-            <?php /*
-            <input id="show_pdf_options" class="btn btn-primary" type="button" value="<?= / * I18N: A button label. * / I18N::translate('pdf') ?>" onclick="toggleShowHide(claseOpcionesPdf)"> 
-                  */
-            ?>
+            <input id="print" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('print') #ESL!!! 20240522 ?>" onclick="PrintDiv(claseBase, /*p_output_type*/ '')">
+            <input id="html" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('html') #ESL!!! 20240725 ?>" onclick="DownloadDiv(claseBase, /*p_output_type*/ 'html')">
+            <input id="show_pdf_options" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('pdf') #ESL!!! 20240725 ?>" onclick="toggleShowHide(claseOpcionesPdf)"> 
             <img id="workingimage" src="data:image/gif;base64,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">
         </div>
     </div>
@@ -771,7 +858,7 @@ function applyStyle(el) {
         <div class="col-sm-9 wt-page-options-value">
             <?= view('components/select', ['name' => 'paper_size', 'id' => 'paper_size', 'selected' => 'LETTER', 'options' => ['A3' => /* I18N: A button label. */ I18N::translate('A3 (297mm x 420mm)'), 'A4' => /* I18N: A button label. */ I18N::translate('A4 (210mm x 297mm)'), 'LETTER' => /* I18N: A button label. */ I18N::translate('LETTER (8.5" x 11")'), 'LEGAL' => /* I18N: A button label. */ I18N::translate('LEGAL (8.5" x 14")')]]) ?>
             <?= view('components/radios-inline', ['name' => 'paper_orientation', 'options' => ['P' => /* I18N: A button label. */ I18N::translate('portrait'), 'L' => /* I18N: A button label. */ I18N::translate('landscape')], 'selected' => 'L']) ?><br>
-            <input id="download_pdf" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('download') ?>" onclick="DownloadDiv(claseBase, /*p_output_type*/ 'pdf')"> 
+            <input id="download_pdf" class="btn btn-primary" type="button" value="<?= /* I18N: A button label. */ I18N::translate('download') #ESL!!! 20240725 ?>" onclick="DownloadDiv(claseBase, /*p_output_type*/ 'pdf')"> 
         </div>
         </div>
         </div>

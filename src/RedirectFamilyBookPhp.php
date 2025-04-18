@@ -39,7 +39,6 @@ class RedirectFamilyBookPhp implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-exit;
         $ged         = Validator::queryParams($request)->string('ged', Site::getPreference('DEFAULT_GEDCOM'));
         $root_id     = Validator::queryParams($request)->string('rootid', '');
         $generations = Validator::queryParams($request)->string('generations', FamilyBookChartModule::DEFAULT_GENERATIONS);
