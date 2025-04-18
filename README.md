@@ -15,7 +15,10 @@ This module adds a chart of an individual’s ancestors and descendants, as a fa
 
 Installation & upgrading
 ------------------------
-Unpack the zip file and place the mitalteli-chart-family-book folder in the modules_v4 folder of webtrees. Upload the newly added folder to your server. It is activated by default and will work immediately. No additional configuration is required. *NOTE: The directory name must have a maximum length of 30 characters.*
+Unpack the zip file and place the mitalteli-chart-family-book folder in the modules_v4 folder of webtrees. Upload the newly added folder to your server. It is activated by default and will work immediately. No additional configuration is required.
+
+NOTE: The directory name must have a maximum length of 30 characters.
+-
 
 Bugs & feature requests
 -------------------------
