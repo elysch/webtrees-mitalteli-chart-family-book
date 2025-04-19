@@ -24,7 +24,7 @@ Unpack the zip file and place the mitalteli-chart-family-book folder in the modu
 
 Bugs & feature requests
 -------------------------
-This is a simple module and provided as is. However, if you experience any bugs you can [create a new issue on GitHub][3]. Since this is a simple module, I will be reluctant to accept feature requests.
+This is a simple module and provided as is. However, if you experience any bugs you can [create a new issue on GitHub][3]. 
 
  [1]: https://github.com/elysch/webtrees-mitalteli-chart-family-book/releases/latest
  [2]: https://webtrees.github.io/download
