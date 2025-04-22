@@ -27,7 +27,8 @@ use Fig\Http\Message\StatusCodeInterface;
 use Fisharebest\Webtrees\Report\ReportParserGenerate;
 use Fisharebest\Webtrees\Report\PdfRenderer;
 use Fisharebest\Webtrees\View;
-
+use Fisharebest\Webtrees\Webtrees;
+use Fisharebest\Webtrees\Services\ModuleService;
 
 use function route;
 use function ob_get_clean;
@@ -43,6 +44,16 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
 {
     use ModuleCustomTrait;
     use ModuleChartTrait;
+    public ModuleService $module_service;
+
+     /**
+      *
+      * @param ModuleService $module_service
+      */
+    public function __construct(ModuleService $module_service)
+    {
+        $this->module_service = $module_service;
+    }
 
      /**
      * @var string
@@ -52,7 +63,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     /**
      * @var string
      */
-    public const CUSTOM_VERSION = '1.0.1';
+    public const CUSTOM_VERSION = '1.1.0';
 
      /**
      * @var string
@@ -344,5 +355,20 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'title'               => $this->chartTitle($individual),
             'tree'                => $tree,
         ]);
+    }
+
+    /**
+     * A breaking change in webtrees 2.2.0 changes how the classes are retrieved.
+     * This function allows support for both 2.1.X and 2.2.X versions
+     * @param $class
+     * @return mixed
+     */
+    static function getClass($class)
+    {
+        if (version_compare(Webtrees::VERSION, '2.2.0', '>=')) {
+            return Registry::container()->get($class);
+        } else {
+            return app($class);
+        }
     }
 }
