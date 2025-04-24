@@ -12,6 +12,7 @@ use Fisharebest\Webtrees\Module\ModuleChartInterface;
 use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Services\ModuleService;
 use Illuminate\Support\Collection;
+use Mitalteli\Webtrees\Chart\EnhancedFamilyBookChart\EnhancedFamilyBookChartModule;
 
 /**
  * @var Individual|null   $individual
@@ -36,7 +37,7 @@ if ($individual === null) {
     return;
 }
 
-$module_service = app(ModuleService::class);
+$module_service = EnhancedFamilyBookChartModule::getClass(ModuleService::class);
 
 $menus = $module_service->findByComponent(ModuleChartInterface::class, $individual->tree(), Auth::user())->map(static function (ModuleChartInterface $module) use ($individual): ?Menu {
     return $module->chartBoxMenu($individual);

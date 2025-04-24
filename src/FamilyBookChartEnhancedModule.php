@@ -63,7 +63,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     /**
      * @var string
      */
-    public const CUSTOM_VERSION = '1.1.0';
+    public const CUSTOM_VERSION = '1.1.1';
 
      /**
      * @var string
@@ -318,9 +318,9 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
                 'generations'  => $generations,
                 'book_size'    => $book_size,
                 'spouses'      => $spouses,
-                'marriages'    => $marriages, #ESL!!!
-                'full_places'  => $full_places, #ESL!!!
-                'extra_images' => $extra_images, #ESL!!!
+                'marriages'    => $marriages,
+                'full_places'  => $full_places,
+                'extra_images' => $extra_images,
                 'module'       => $this->name(),
             ]);
         }
@@ -330,9 +330,9 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'book_size'    => $book_size,
             'generations'  => $generations,
             'spouses'      => $spouses,
-            'marriages'    => $marriages, #ESL!!!
-            'full_places'  => $full_places, #ESL!!!
-            'extra_images' => $extra_images, #ESL!!!
+            'marriages'    => $marriages,
+            'full_places'  => $full_places,
+            'extra_images' => $extra_images,
         ]);
 
         return $this->viewResponse(
@@ -348,10 +348,10 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'minimum_generations' => self::MINIMUM_GENERATIONS,
             'module'              => $this->name(),
             'spouses'             => $spouses,
-            'marriages'           => $marriages, #ESL!!!
-            'full_places'         => $full_places, #ESL!!!
-            'extra_images'        => $extra_images, #ESL!!!
-            'hiddenprintcontent'  => $hiddenprintcontent, #ESL!!!
+            'marriages'           => $marriages,
+            'full_places'         => $full_places,
+            'extra_images'        => $extra_images,
+            'hiddenprintcontent'  => $hiddenprintcontent,
             'title'               => $this->chartTitle($individual),
             'tree'                => $tree,
         ]);
