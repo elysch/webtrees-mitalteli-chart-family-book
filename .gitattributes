@@ -1,0 +1,67 @@
+#
+# Help from:
+# https://git-scm.com/docs/git-config
+# https://git-scm.com/docs/gitattributes
+# https://github.com/gitattributes/gitattributes/blob/master/PHP.gitattributes
+# https://github.com/gitattributes/gitattributes/blob/master/Drupal.gitattributes
+#
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Define text file attributes.
+# - Treat them as text.
+# - Ensure no CRLF line-endings, neither on checkout nor on checkin.
+# - Detect whitespace errors.
+#   - Exposed by default in `git diff --color` on the CLI.
+#   - Validate with `git diff --check`.
+#   - Deny applying with `git apply --whitespace=error-all`.
+#   - Fix automatically with `git apply --whitespace=fix`.
+#
+
+*.bash    text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.config  text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.css     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.dist    text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.engine  text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.html    text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=html
+*.inc     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.install text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.js      text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.mjs     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.cjs     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.json    text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.lock    text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.map     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.md      text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.module  text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.php     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.phtml   text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=html
+*.po      text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.profile text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.script  text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.sh      text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.sql     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.svg     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.theme   text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4 diff=php
+*.twig    text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.txt     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.xml     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+*.yml     text eol=lf whitespace=blank-at-eol,-blank-at-eof,space-before-tab,tab-in-indent,tabwidth=4
+
+# Define binary file attributes.
+# - Do not treat them as text.
+# - Include binary diff in patches instead of "binary files differ."
+*.eot     -text diff
+*.exe     -text diff
+*.gif     -text diff
+*.gz      -text diff
+*.ico     -text diff
+*.jpeg    -text diff
+*.jpg     -text diff
+*.otf     -text diff
+*.phar    -text diff
+*.png     -text diff
+*.svgz    -text diff
+*.ttf     -text diff
+*.woff    -text diff
+*.woff2   -text diff
