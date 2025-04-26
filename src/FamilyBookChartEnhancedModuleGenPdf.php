@@ -2,6 +2,8 @@
 // Include TCPDF library
 require_once(__DIR__.'/../../vendor/tecnickcom/tcpdf/examples/tcpdf_include.php');
 
+use Fisharebest\Webtrees\I18N;
+
 # ModSecurity: Request body no files data length is larger than the configured limit (131072)
 ini_set('memory_limit', '8192M');
 
@@ -16,11 +18,11 @@ class MYPDF extends TCPDF {
 $pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
 // PDF document configuration
-$pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('Your Name');
-$pdf->SetTitle('Document Title');
-$pdf->SetSubject('Document subject');
-$pdf->SetKeywords('TCPDF, PDF, HTML, UTF-8');
+$pdf->SetCreator(PDF_CREATOR));
+$pdf->SetAuthor(I18N::translate('Your Name'));
+$pdf->SetTitle(I18N::translate('Document Title'));
+$pdf->SetSubject(I18N::translate('Document subject'));
+$pdf->SetKeywords(I18N::translate('TCPDF, PDF, HTML, UTF-8'));
 
 // Page configuration
 $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
@@ -45,9 +47,9 @@ $css = "
         line-height: 1.5;
     }
     .my-class {
-        /* Ajustes de estilo específicos */
+        /* Specific style configuration */
     }
-    /* Otros estilos personalizados */
+    /* Other personalized styles */
 </style>
 ";
 

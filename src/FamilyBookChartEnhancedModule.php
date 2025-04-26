@@ -29,6 +29,7 @@ use Fisharebest\Webtrees\Report\PdfRenderer;
 use Fisharebest\Webtrees\View;
 use Fisharebest\Webtrees\Webtrees;
 use Fisharebest\Webtrees\Services\ModuleService;
+use Fisharebest\Localization\Translation;
 
 use function route;
 use function ob_get_clean;
@@ -63,7 +64,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     /**
      * @var string
      */
-    public const CUSTOM_VERSION = '1.1.1';
+    public const CUSTOM_VERSION = '1.2.1';
 
      /**
      * @var string
@@ -355,6 +356,20 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'title'               => $this->chartTitle($individual),
             'tree'                => $tree,
         ]);
+    }
+
+    /**
+     * Additional translations for module.
+     *
+     * @param string $language
+     *
+     * @return string[]
+     */
+    public function customTranslations(string $language): array
+    {
+        $file = $this->resourcesFolder() . 'lang/' . $language . '.php';
+
+        return file_exists($file) ? (new Translation($file))->asArray() : [];
     }
 
     /**
