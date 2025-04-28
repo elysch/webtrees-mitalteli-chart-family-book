@@ -47,6 +47,24 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     use ModuleChartTrait;
     public ModuleService $module_service;
 
+    public const CUSTOM_AUTHOR = 'elysch';
+    public const CUSTOM_VERSION = '1.3.1';
+    public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
+    public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
+    public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
+    protected const ROUTE_URL = '/tree/{tree}/mitalteli-family-book-{book_size}-{generations}-{spouses}-{marriages}-{full_places}-{extra_images}/{xref}';
+
+    // Limits
+    protected const MINIMUM_BOOK_SIZE = 2;
+    protected const MAXIMUM_BOOK_SIZE = 5;
+
+    protected const MINIMUM_GENERATIONS = 2;
+    protected const MAXIMUM_GENERATIONS = 10;
+
+    // Defaults
+    public const    DEFAULT_GENERATIONS            = '3';
+    public const    DEFAULT_DESCENDANT_GENERATIONS = '6';
+
      /**
       *
       * @param ModuleService $module_service
@@ -56,40 +74,6 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         $this->module_service = $module_service;
     }
 
-     /**
-     * @var string
-     */
-    public const CUSTOM_AUTHOR = 'elysch';
-
-    /**
-     * @var string
-     */
-    public const CUSTOM_VERSION = '1.2.1';
-
-     /**
-     * @var string
-     */
-    public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
-
-     /**
-     * @var string
-     */
-    public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
-
-     /**
-     * @var string
-     */
-    public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
-
-     /**
-     * @var string
-     */
-    protected const ROUTE_URL = '/tree/{tree}/mitalteli-family-book-{book_size}-{generations}-{spouses}-{marriages}-{full_places}-{extra_images}/{xref}';
-
-    // Defaults
-    public const    DEFAULT_GENERATIONS            = '3';
-    public const    DEFAULT_DESCENDANT_GENERATIONS = '6';
-
     protected const DEFAULT_PARAMETERS             = [
         'book_size'    => self::DEFAULT_GENERATIONS,
         'generations'  => self::DEFAULT_DESCENDANT_GENERATIONS,
@@ -98,13 +82,6 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         'full_places'  => true,
         'extra_images' => true,
     ];
-
-    // Limits
-    protected const MINIMUM_BOOK_SIZE = 2;
-    protected const MAXIMUM_BOOK_SIZE = 5;
-
-    protected const MINIMUM_GENERATIONS = 2;
-    protected const MAXIMUM_GENERATIONS = 10;
 
     /**
      * Initialization.

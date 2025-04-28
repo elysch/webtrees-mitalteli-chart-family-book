@@ -19,8 +19,8 @@
     "Extra images" => 'Imágenes adicionales', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "Show extra images" => 'Mostrar imágenes adicionales', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "To generate a pdf you can use print function and select &quot;Save as PDF&quot;, then specify a scale percentage in &quot;more options&quot;. With Chrome and Edge browsers on Windows OS, 47&percnt; has worked fine for me when showing 5 generations horizontaly and setting landscape US Letter page." => 'Para generar un PDF, puede usar la función de impresión y seleccionar "Guardar como PDF". Luego, especifique un porcentaje de escala en "Más opciones". Con los navegadores Chrome y Edge en Windows, el 47&percent; me ha funcionado correctamente al mostrar 5 generaciones horizontalmente y configurar la página en formato Carta horizontal.', // resources\views\modules\mitalteli-family-book-chart\page.phtml
-    "view" => 'Ver', // resources\views\modules\mitalteli-family-book-chart\page.phtml
-    "print" => 'Imprimir', // resources\views\modules\mitalteli-family-book-chart\page.phtml
+    "view" => 'ver', // resources\views\modules\mitalteli-family-book-chart\page.phtml
+    "print" => 'imprimir', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "html" => 'html', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "pdf" => 'pdf', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "A3 (297mm x 420mm)" => 'A3 (297mm x 420mm)', // resources\views\modules\mitalteli-family-book-chart\page.phtml
