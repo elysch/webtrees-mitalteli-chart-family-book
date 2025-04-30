@@ -14,12 +14,16 @@ Description
 ------------
 This module adds a chart of an individual’s ancestors and descendants, as a family book (enhanced with marriages, images, and more).
 
--You can select number of Generations and number of Descendant Generations
--You can format the places in any one of these options:
-    Full place, City only, City and country, City and 2 letter country code, City and 3 letter country code (Thanks to [Neriderc/GVExport chart](https://github.com/Neriderc/GVExport))
--You can show spouses (with the first image to the left) or not.
--You can show marriages (with the first image to the left) or not.
--You can show extra images or not. These are shown to the right and correspond to the first image of each one of the following facts: Birth, Death, Burial.
+* You can select number of Generations and number of Descendant Generations
+* You can format the places in any one of these options (Thanks to [Neriderc/GVExport chart](https://github.com/Neriderc/GVExport)):
+   * Full place,
+   * City only,
+   * City and country,
+   * City and 2 letter country code,
+   * City and 3 letter country code 
+* You can show spouses (with the first image to the left) or not.
+* You can show marriages (with the first image to the left) or not.
+* You can show extra images or not. These are shown to the right and correspond to the first image of each one of the following facts: Birth, Death, Burial.
 
 Installation & upgrading
 ------------------------
