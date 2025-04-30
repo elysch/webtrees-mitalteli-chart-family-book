@@ -48,11 +48,11 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public ModuleService $module_service;
 
     public const CUSTOM_AUTHOR = 'elysch';
-    public const CUSTOM_VERSION = '1.3.1';
+    public const CUSTOM_VERSION = '1.4.0';
     public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
-    protected const ROUTE_URL = '/tree/{tree}/mitalteli-family-book-{book_size}-{generations}-{spouses}-{marriages}-{full_places}-{extra_images}/{xref}';
+    protected const ROUTE_URL = '/tree/{tree}/mitalteli-family-book-{book_size}-{generations}-{spouses}-{marriages}-{places_format}-{extra_images}/{xref}';
 
     // Limits
     protected const MINIMUM_BOOK_SIZE = 2;
@@ -61,9 +61,20 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     protected const MINIMUM_GENERATIONS = 2;
     protected const MAXIMUM_GENERATIONS = 10;
 
+    // PLAC format
+    // https://github.com/Neriderc/GVExport/blob/main/app/Settings.php#L50
+    const OPTION_FULL_PLACE_NAME = 0;
+    const OPTION_CITY_ONLY = 5;
+    const OPTION_CITY_AND_COUNTRY = 10;
+    const OPTION_2_LETTER_ISO = 20;
+    const OPTION_3_LETTER_ISO = 30;
+
+    public const OPTIONS_ABBR_PLACES = [self::OPTION_FULL_PLACE_NAME => "Full place name", self::OPTION_CITY_ONLY => "City only",  self::OPTION_CITY_AND_COUNTRY => "City and country",  self::OPTION_2_LETTER_ISO => "City and 2 letter ISO country code", self::OPTION_3_LETTER_ISO => "City and 3 letter ISO country code"];
+
     // Defaults
     public const    DEFAULT_GENERATIONS            = '3';
     public const    DEFAULT_DESCENDANT_GENERATIONS = '6';
+    public const    DEFAULT_PLACES_FORMAT          = self::OPTION_FULL_PLACE_NAME;
 
      /**
       *
@@ -75,12 +86,12 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     }
 
     protected const DEFAULT_PARAMETERS             = [
-        'book_size'    => self::DEFAULT_GENERATIONS,
-        'generations'  => self::DEFAULT_DESCENDANT_GENERATIONS,
-        'spouses'      => true,
-        'marriages'    => true,
-        'full_places'  => true,
-        'extra_images' => true,
+        'book_size'     => self::DEFAULT_GENERATIONS,
+        'generations'   => self::DEFAULT_DESCENDANT_GENERATIONS,
+        'spouses'       => true,
+        'marriages'     => true,
+        'places_format' => self::DEFAULT_PLACES_FORMAT,
+        'extra_images'  => true,
     ];
 
     /**
@@ -97,7 +108,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         // Register a namespace for our views.
         View::registerNamespace($this->name(), $this->resourcesFolder() . 'views/');
 
-        ini_set('max_execution_time', '300'); //300 seconds = 5 minutes ESL!!!
+        ini_set('max_execution_time', '300'); //300 seconds = 5 minutes
     }
 
      /**
@@ -233,25 +244,133 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     }
 
     /**
+     * Returns an abbreviated version of the PLAC string.
+     * Taken from https://github.com/Neriderc/GVExport/blob/f5737ad66e5a7669cd4bd50d9efffb9e7ee1aa83/app/Dot.php#L1519 and modified variable names, arguments and removed $settings
+     *
+     * @param	string $place_long Place string in long format (Town,County,State/Region,Country)
+     * @return	string	The abbreviated place name
+     */
+    public static function getAbbreviatedPlace(string $place_long, int $place_format): string
+    {
+        // If chose no abbreviating, then return string untouched
+        if ($place_format == self::OPTION_FULL_PLACE_NAME) {
+            return $place_long;
+        }
+
+        $htmlBefore = '';
+        $htmlAfter = '';
+        if ( preg_match('@^(<[^>]+?>)(.*)(</[^>]+?>)$@', $place_long, $matches) ) {
+            $htmlBefore = $matches[1];
+            $place_long = $matches[2];
+            $htmlAfter = $matches[3];
+        }
+        
+        // Cut the place name up into pieces using the commas
+        $place_chunks = explode(",", $place_long);
+        $place = "";
+        $chunk_count = count($place_chunks);
+        $abbreviating_country = !($chunk_count == 1 && ($place_format == self::OPTION_2_LETTER_ISO || $place_format == self::OPTION_3_LETTER_ISO));
+
+        // Add city to our return string
+        if (!empty($place_chunks[0]) && $abbreviating_country) {
+            $place .= trim($place_chunks[0]);
+
+            if ($place_format == self::OPTION_CITY_ONLY) {
+                return $htmlBefore . $place . $htmlAfter;
+            }
+        }
+
+        // Chose to keep just the first and last sections
+        if ($place_format == self::OPTION_CITY_AND_COUNTRY) {
+            if (!empty($place_chunks[$chunk_count - 1]) && ($chunk_count > 1)) {
+                if (!empty($place)) {
+                    $place .= ", ";
+                }
+                $place .= trim($place_chunks[$chunk_count - 1]);
+                return $htmlBefore . $place . $htmlAfter;
+            }
+        }
+
+        /* Otherwise, we have chosen one of the ISO code options */
+        switch ($place_format) {
+            case self::OPTION_2_LETTER_ISO:
+                $code = "iso2";
+                break;
+            case self::OPTION_3_LETTER_ISO:
+                $code = "iso3";
+                break;
+            default:
+                return $htmlBefore . $place_long . $htmlAfter;
+        }
+
+        /* It's possible the place name string was blank, meaning our return variable is
+               still blank. We don't want to add a comma if that's the case. */
+        if (!empty($place) && !empty($place_chunks[$chunk_count - 1]) && ($chunk_count > 1)) {
+            $place .= ", ";
+        }
+
+        $countries = self::loadCountryDataFile($code);
+
+        /* Look up our country in the array of country names.
+           It must be an exact match, or it won't be abbreviated to the country code. */
+        if (isset($countries[strip_tags(strtolower(trim($place_chunks[$chunk_count - 1])))])) {
+            $place .= $countries[strip_tags(strtolower(trim($place_chunks[$chunk_count - 1])))];
+        } else {
+            // We didn't find country in the abbreviation list, so just add the full country name
+            if (!empty($place_chunks[$chunk_count - 1])) {
+                $place .= trim($place_chunks[$chunk_count - 1]);
+            }
+        }
+        return $htmlBefore . $place . $htmlAfter;
+    }
+
+    /**
+     * Loads country data from JSON file
+     * https://github.com/Neriderc/GVExport/blob/main/app/Settings.php
+     * Data comes from https://github.com/stefangabos/world_countries
+     *
+     * @param $type
+     * @return array|false
+     */
+    private static function loadCountryDataFile($type) {
+        switch ($type) {
+            case 'iso2':
+                $string = file_get_contents(dirname(__FILE__) . "/../resources/data/CountryRegionCodes2Char.json");
+                break;
+            case 'iso3':
+                $string = file_get_contents(dirname(__FILE__) . "/../resources/data/CountryRegionCodes3Char.json");
+                break;
+            default:
+                return false;
+        }
+        $json = json_decode($string, true);
+        $countries = [];
+        foreach ($json as $row => $value) {
+            $countries[strtolower($row)] = strtoupper($value);
+        }
+        return $countries;
+    }
+
+    /**
      * @param ServerRequestInterface $request
      *
      * @return ResponseInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $tree         = Validator::attributes($request)->tree();
-        $user         = Validator::attributes($request)->user();
-        $xref         = Validator::attributes($request)->isXref()->string('xref');
-        $book_size    = Validator::attributes($request)->isBetween(self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE)->integer('book_size');
-        $generations  = Validator::attributes($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations');
-        $spouses      = Validator::attributes($request)->boolean('spouses', false);
-        $marriages    = Validator::attributes($request)->boolean('marriages', false); #ESL!!!
-        $full_places  = Validator::attributes($request)->boolean('full_places', false); #ESL!!!
-        $extra_images = Validator::attributes($request)->boolean('extra_images', false); #ESL!!!
-        $hiddenprintcontent = Validator::parsedBody($request)->string('hiddenprintcontent', ""); #ESL!!!
-        $paper_size = Validator::parsedBody($request)->string('paper_size', ""); #ESL!!!
-        $paper_orientation = Validator::parsedBody($request)->string('paper_orientation', ""); #ESL!!!
-        $ajax         = Validator::queryParams($request)->boolean('ajax', false);
+        $tree               = Validator::attributes($request)->tree();
+        $user               = Validator::attributes($request)->user();
+        $xref               = Validator::attributes($request)->isXref()->string('xref');
+        $book_size          = Validator::attributes($request)->isBetween(self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE)->integer('book_size');
+        $generations        = Validator::attributes($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations');
+        $spouses            = Validator::attributes($request)->boolean('spouses', false);
+        $marriages          = Validator::attributes($request)->boolean('marriages', false);
+        $places_format      = Validator::attributes($request)->isInArrayKeys(self::OPTIONS_ABBR_PLACES)->integer('places_format');
+        $extra_images       = Validator::attributes($request)->boolean('extra_images', false);
+        $hiddenprintcontent = Validator::parsedBody($request)->string('hiddenprintcontent', "");
+        $paper_size         = Validator::parsedBody($request)->string('paper_size', "");
+        $paper_orientation  = Validator::parsedBody($request)->string('paper_orientation', "");
+        $ajax               = Validator::queryParams($request)->boolean('ajax', false);
 
         #ini_set('log_errors_max_len','0');
 
@@ -271,14 +390,16 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         // Convert POST requests into GET requests for pretty URLs.
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
             return redirect(route(static::class, [
-                'tree'         => $tree->name(),
-                'xref'         => Validator::parsedBody($request)->isXref()->string('xref'),
-                'book_size'    => Validator::parsedBody($request)->isBetween(self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE)->integer('book_size'),
-                'generations'  => Validator::parsedBody($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations'),
-                'spouses'      => Validator::parsedBody($request)->boolean('spouses', false),
-                'marriages'    => Validator::parsedBody($request)->boolean('marriages', false), #ESL!!!
-                'full_places'  => Validator::parsedBody($request)->boolean('full_places', false), #ESL!!!
-                'extra_images' => Validator::parsedBody($request)->boolean('extra_images', false), #ESL!!!
+                'tree'          => $tree->name(),
+                'xref'          => Validator::parsedBody($request)->isXref()->string('xref'),
+                'book_size'     => Validator::parsedBody($request)->isBetween(self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE)->integer('book_size'),
+                'generations'   => Validator::parsedBody($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations'),
+                'spouses'       => Validator::parsedBody($request)->boolean('spouses', false),
+                'marriages'     => Validator::parsedBody($request)->boolean('marriages', false),
+                'places_format' => Validator::parsedBody($request)->isInArrayKeys(self::OPTIONS_ABBR_PLACES)->integer('places_format'),
+                'extra_images'  => Validator::parsedBody($request)->boolean('extra_images', false),
+                'module_name'    => $this->name(),
+                'module'        => $this,
             ]));
         }
 
@@ -290,27 +411,29 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         if ($ajax) {
             $this->layout = 'layouts/ajax';
 
-        return $this->viewResponse(
-            $this->name() . '::modules/mitalteli-family-book-chart/chart', [
-                'individual'   => $individual,
-                'generations'  => $generations,
-                'book_size'    => $book_size,
-                'spouses'      => $spouses,
-                'marriages'    => $marriages,
-                'full_places'  => $full_places,
-                'extra_images' => $extra_images,
-                'module'       => $this->name(),
-            ]);
+            return $this->viewResponse(
+                $this->name() . '::modules/mitalteli-family-book-chart/chart', [
+                    'individual'    => $individual,
+                    'generations'   => $generations,
+                    'book_size'     => $book_size,
+                    'spouses'       => $spouses,
+                    'marriages'     => $marriages,
+                    'places_format' => $places_format,
+                    'extra_images'  => $extra_images,
+                    'module_name'   => $this->name(),
+                    'module'        => $this,
+                ]
+            );
         }
 
         $ajax_url = $this->chartUrl($individual, [
-            'ajax'         => true,
-            'book_size'    => $book_size,
-            'generations'  => $generations,
-            'spouses'      => $spouses,
-            'marriages'    => $marriages,
-            'full_places'  => $full_places,
-            'extra_images' => $extra_images,
+            'ajax'          => true,
+            'book_size'     => $book_size,
+            'generations'   => $generations,
+            'spouses'       => $spouses,
+            'marriages'     => $marriages,
+            'places_format' => $places_format,
+            'extra_images'  => $extra_images,
         ]);
 
         return $this->viewResponse(
@@ -324,10 +447,11 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'minimum_book_size'   => self::MINIMUM_BOOK_SIZE,
             'maximum_generations' => self::MAXIMUM_GENERATIONS,
             'minimum_generations' => self::MINIMUM_GENERATIONS,
-            'module'              => $this->name(),
+            'module_name'         => $this->name(),
+            'module'              => $this,
             'spouses'             => $spouses,
             'marriages'           => $marriages,
-            'full_places'         => $full_places,
+            'places_format'       => $places_format,
             'extra_images'        => $extra_images,
             'hiddenprintcontent'  => $hiddenprintcontent,
             'title'               => $this->chartTitle($individual),

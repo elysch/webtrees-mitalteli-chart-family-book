@@ -18,13 +18,13 @@ use Mitalteli\Webtrees\Chart\EnhancedFamilyBookChart\EnhancedFamilyBookChartModu
  * @var Individual|null   $individual
  * @var ModuleService     $module_service
  * @var Collection|Menu[] $menus
- * @var bool              $full_places
+ * @var int               $places_format
  * @var bool              $extra_images
  */
 
-if (!isset($full_places)) {
-    $full_places = false;
-    error_log("NNNNNNOOOOOOOTTTTTTT DEFINED full_places ---------------------------------------------");
+if (!isset($places_format)) {
+    $places_format = $module::DEFAULT_PLACES_FORMAT;
+    error_log("NNNNNNOOOOOOOTTTTTTT DEFINED places_format ---------------------------------------------");
 }
 
 if (!isset($extra_images)) {
@@ -127,14 +127,11 @@ $id = Registry::idFactory()->id();
 
                 <div class="dropdown-menu dropdown-menu-end wt-chart-box-dropdown wt-chart-box-zoom-dropdown" style="position: inherit" aria-labelledby="#chart-box-zoom-<?= $id ?>">
                     <?php foreach ($all_facts as $fact) : ?>
-                        <?php if($full_places) : ?>
-                            <?php $summaryStr = $fact->summary(); ?>
-                            <?php $summaryPlace = $fact->place()->shortName(); ?>
-                            <?php $fullPlace = $fact->place()->fullName(); ?>
-                            <?= str_replace($summaryPlace, $fullPlace, $summaryStr) ?>
-                        <?php else : ?>
-                            <?= $fact->summary() ?>
-                        <?php endif; ?>
+                        <?php $summaryStr = $fact->summary(); ?>
+                        <?php $summaryPlace = $fact->place()->shortName(); ?>
+                        <?php $fullPlace = $fact->place()->fullName(); ?>
+                        <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
+                        <?= str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
                     <?php endforeach ?>
                 </div>
             </div>
@@ -188,14 +185,11 @@ $id = Registry::idFactory()->id();
                 }  # SHOW_HIGHLIGHT_IMAGES
                 $event = $individual->facts([$birttag])->first();
                 if ($event instanceof Fact) {
-                    if($full_places) {
-                        $summaryStr = $event->summary();
-                        $summaryPlace = $event->place()->shortName();
-                        $fullPlace = $event->place()->fullName();
-                        $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
-                    } else {
-                        $out .= $event->summary();
-                    }
+                    $summaryStr = $event->summary();
+                    $summaryPlace = $event->place()->shortName();
+                    $fullPlace = $event->place()->fullName();
+                    $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format);
+                    $out .= str_replace($summaryPlace, $formattedPlace, $summaryStr);
                     break;
                 }
             }
@@ -221,14 +215,11 @@ $id = Registry::idFactory()->id();
                 }  # SHOW_HIGHLIGHT_IMAGES
                 $event = $individual->facts([$tag])->first();
                 if ($event instanceof Fact) {
-                    if($full_places) {
-                        $summaryStr = $event->summary();
-                        $summaryPlace = $event->place()->shortName();
-                        $fullPlace = $event->place()->fullName();
-                        $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
-                    } else {
-                        $out .= $event->summary();
-                    }
+                    $summaryStr = $event->summary();
+                    $summaryPlace = $event->place()->shortName();
+                    $fullPlace = $event->place()->fullName();
+                    $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format);
+                    $out .= str_replace($summaryPlace, $formattedPlace, $summaryStr);
                     unset($opt_tags[$key]);
                 }
             }
@@ -254,14 +245,11 @@ $id = Registry::idFactory()->id();
 
             $event = $individual->facts([$deattag])->first();
             if ($event instanceof Fact) {
-                if($full_places) {
-                    $summaryStr = $event->summary();
-                    $summaryPlace = $event->place()->shortName();
-                    $fullPlace = $event->place()->fullName();
-                    $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
-                } else {
-                    $out .= $event->summary();
-                }
+                $summaryStr = $event->summary();
+                $summaryPlace = $event->place()->shortName();
+                $fullPlace = $event->place()->fullName();
+                $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format);
+                $out .= str_replace($summaryPlace, $formattedPlace, $summaryStr);
                 if (in_array($deattag, $opt_tags, true)) {
                     unset($opt_tags[array_search($deattag, $opt_tags, true)]);
                 }
@@ -293,14 +281,11 @@ $id = Registry::idFactory()->id();
             }  # SHOW_HIGHLIGHT_IMAGES
             $event = $individual->facts([$tag])->first();
             if ($event instanceof Fact) {
-                if($full_places) {
-                    $summaryStr = $event->summary();
-                    $summaryPlace = $event->place()->shortName();
-                    $fullPlace = $event->place()->fullName();
-                    $out .= str_replace($summaryPlace, $fullPlace, $summaryStr);
-                } else {
-                    $out .= $event->summary();
-                }
+                $summaryStr = $event->summary();
+                $summaryPlace = $event->place()->shortName();
+                $fullPlace = $event->place()->fullName();
+                $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format);
+                $out .= str_replace($summaryPlace, $formattedPlace, $summaryStr);
             }
         }
     ?>
@@ -309,7 +294,7 @@ $id = Registry::idFactory()->id();
             <div class="wt-chart-box-thumbnail float-end me-1">
             <?php foreach ($factIconsArray as $iconElement) : ?>
                 <div class="wt-chart-box-thumbnail float-start me-1">
-                    <?= view($module . '::chart-box-icon-only', ['gedcom' => $iconElement['media'], 'parent' => $iconElement['tag'], 'tree' => $iconElement['tree']]) ?>
+                    <?= view($module_name . '::chart-box-icon-only', ['gedcom' => $iconElement['media'], 'parent' => $iconElement['tag'], 'tree' => $iconElement['tree']]) ?>
                 </div>
             <?php endforeach ?>
             </div>

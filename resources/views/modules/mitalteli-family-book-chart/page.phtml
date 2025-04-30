@@ -17,7 +17,7 @@ use Fisharebest\Webtrees\Tree;
  * @var int        $minimum_generations
  * @var bool       $spouses
  * @var bool       $marriages
- * @var bool       $full_places
+ * @var bool       $places_format
  * @var bool       $extra_images
  * @var string     $title
  * @var Tree       $tree
@@ -724,6 +724,12 @@ function applyStyle(el) {
 
     <fieldset class="row mb-3">
         <legend class="col-form-label col-sm-3 wt-page-options-label">
+            <?= I18N::translate('Places format') ?>
+        </legend>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/select', ['label' => I18N::translate('Places format'), 'name' => 'places_format', 'id' => 'places_format', 'selected' => I18N::digits($places_format), 'options' => $module::OPTIONS_ABBR_PLACES]) ?>
+        </div>
+        <legend class="col-form-label col-sm-3 wt-page-options-label">
             <?= I18N::translate('Spouses') ?>
         </legend>
         <div class="col-sm-9 wt-page-options-value">
@@ -734,12 +740,6 @@ function applyStyle(el) {
         </legend>
         <div class="col-sm-9 wt-page-options-value">
             <?= view('components/checkbox', ['label' => I18N::translate('Show marriages'), 'name' => 'marriages', 'checked' => $marriages]) ?>
-        </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Show full places') ?>
-        </legend>
-        <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/checkbox', ['label' => I18N::translate('Show full places'), 'name' => 'full_places', 'checked' => $full_places]) ?>
         </div>
         <legend class="col-form-label col-sm-3 wt-page-options-label">
             <?= I18N::translate('Extra images') ?>

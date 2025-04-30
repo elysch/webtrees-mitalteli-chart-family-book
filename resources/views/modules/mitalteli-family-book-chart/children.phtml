@@ -9,8 +9,8 @@ use Illuminate\Support\Collection;
 /**
  * @var Collection<int,Individual> $children
  * @var int                        $generations
- * @var bool                       $full_places #ESL!!!
- * @var bool                       $extra_images #ESL!!!
+ * @var int                        $places_format
+ * @var bool                       $extra_images
  */
 
 ?>
@@ -21,10 +21,10 @@ use Illuminate\Support\Collection;
         })->flatten() ?>
         <div class="d-flex justify-content-end">
             <?php if ($generations > 1 && $grandchildren->isNotEmpty()) : ?>
-                <?= view($module . '::modules/mitalteli-family-book-chart/children', ['children' => $grandchildren, 'generations' => $generations - 1, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+                <?= view($module_name . '::modules/mitalteli-family-book-chart/children', ['children' => $grandchildren, 'generations' => $generations - 1, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
             <?php endif ?>
             <div class="align-self-center">
-                <?= view($module . '::chart-box', ['individual' => $child, 'full_places' => $full_places, 'extra_images' => $extra_images, 'module' => $module]) ?>
+                <?= view($module_name . '::chart-box', ['individual' => $child, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
             </div>
             <div class="wt-chart-horizontal-spacer">
                 <?php if ($children->count() === 1) : ?>
