@@ -17,14 +17,14 @@ use Illuminate\Support\Collection;
 <div class="align-self-center">
     <?php foreach ($children as $n => $child) : ?>
         <?php $grandchildren = $child->spouseFamilies()->map(static function (Family $family): Collection {
-    return $family->children();
+            return $family->children();
         })->flatten() ?>
         <div class="d-flex justify-content-end">
             <?php if ($generations > 1 && $grandchildren->isNotEmpty()) : ?>
-                <?= view($module_name . '::modules/mitalteli-family-book-chart/children', ['children' => $grandchildren, 'generations' => $generations - 1, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
+                <?= view($module_name . '::modules/mitalteli-family-book-chart/children', ['children' => $grandchildren, 'generations' => $generations - 1, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
             <?php endif ?>
             <div class="align-self-center">
-                <?= view($module_name . '::chart-box', ['individual' => $child, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
+                <?= view($module_name . '::chart-box', ['individual' => $child, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
             </div>
             <div class="wt-chart-horizontal-spacer">
                 <?php if ($children->count() === 1) : ?>

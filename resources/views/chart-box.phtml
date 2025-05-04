@@ -131,7 +131,8 @@ $id = Registry::idFactory()->id();
                         <?php $summaryPlace = $fact->place()->shortName(); ?>
                         <?php $fullPlace = $fact->place()->fullName(); ?>
                         <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
-                        <?= str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
+                        <?php $summaryStr = str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
+                        <?= $summaryStr ?>
                     <?php endforeach ?>
                 </div>
             </div>

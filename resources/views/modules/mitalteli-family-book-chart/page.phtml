@@ -727,7 +727,7 @@ function applyStyle(el) {
             <?= I18N::translate('Places format') ?>
         </legend>
         <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/select', ['label' => I18N::translate('Places format'), 'name' => 'places_format', 'id' => 'places_format', 'selected' => I18N::digits($places_format), 'options' => $module::OPTIONS_ABBR_PLACES]) ?>
+            <?= view('components/select', ['label' => I18N::translate('Places format'), 'name' => 'places_format', 'id' => 'places_format', 'selected' => I18N::digits($places_format), 'options' => $module->abbrPlacesOptions()]) ?>
         </div>
         <legend class="col-form-label col-sm-3 wt-page-options-label">
             <?= I18N::translate('Spouses') ?>
@@ -746,6 +746,14 @@ function applyStyle(el) {
         </legend>
         <div class="col-sm-9 wt-page-options-value">
             <?= view('components/checkbox', ['label' => I18N::translate('Show extra images'), 'name' => 'extra_images', 'checked' => $extra_images]) ?>
+        </div>
+        <legend class="col-form-label col-sm-3 wt-page-options-label">
+            <?= I18N::translate('Debug level') ?>
+        </legend>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/select', ['name' => 'debug', 'id' => 'debug', 'selected' => '-1', 'options' => ['-1' => /* I18N: A button label. */ I18N::translate('No debug'), '1' => /* I18N: A button label. */ I18N::translate('Place substitution debug')]]) ?>
+        </div>
+        <div class="col-sm-9 wt-page-options-value">
         </div>
     </fieldset>
 

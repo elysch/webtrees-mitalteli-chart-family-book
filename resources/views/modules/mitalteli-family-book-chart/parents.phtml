@@ -24,7 +24,7 @@ use Fisharebest\Webtrees\Family;
             </div>
 
             <div class="align-self-center">
-                <?= view($module_name . '::chart-box', ['individual' => $family ? $family->husband() : null, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
+                <?= view($module_name . '::chart-box', ['individual' => $family ? $family->husband() : null, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
             </div>
 
             <?php if ($generations > 1) : ?>
@@ -32,7 +32,7 @@ use Fisharebest\Webtrees\Family;
                     <div class="wt-chart-horizontal-line"></div>
                 </div>
 
-                <?= view($module_name . '::modules/mitalteli-family-book-chart/parents', ['family' => $family && $family->husband() ? $family->husband()->childFamilies()->first() : null, 'generations' => $generations - 1, 'spouses' => $spouses, 'marriages' => $marriages, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
+                <?= view($module_name . '::modules/mitalteli-family-book-chart/parents', ['family' => $family && $family->husband() ? $family->husband()->childFamilies()->first() : null, 'generations' => $generations - 1, 'spouses' => $spouses, 'marriages' => $marriages, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
             <?php endif ?>
         </div>
 
@@ -49,7 +49,7 @@ use Fisharebest\Webtrees\Family;
                         <div class="wt-chart-horizontal-parent-marriage"></div>
                     </div>
                 </div>
-                            <div class="align-self-center"><?= view($module_name . '::chart-box-marriage', ['family' => $family, 'places_format' => $places_format, 'module_name' => $module_name, 'module' => $module]) ?></div>
+                            <div class="align-self-center"><?= view($module_name . '::chart-box-marriage', ['family' => $family, 'places_format' => $places_format, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?></div>
             </div>
 
         <?php endif ?>
@@ -60,7 +60,7 @@ use Fisharebest\Webtrees\Family;
             </div>
 
             <div class="align-self-center">
-                <?= view($module_name . '::chart-box', ['individual' => $family ? $family->wife() : null, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
+                <?= view($module_name . '::chart-box', ['individual' => $family ? $family->wife() : null, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
             </div>
 
             <?php if ($generations > 1) : ?>
@@ -68,7 +68,7 @@ use Fisharebest\Webtrees\Family;
                     <div class="wt-chart-horizontal-line"></div>
                 </div>
 
-                <?= view($module_name . '::modules/mitalteli-family-book-chart/parents', ['family' => $family && $family->wife() ? $family->wife()->childFamilies()->first() : null, 'generations' => $generations - 1, 'spouses' => $spouses, 'marriages' => $marriages, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module]) ?>
+                <?= view($module_name . '::modules/mitalteli-family-book-chart/parents', ['family' => $family && $family->wife() ? $family->wife()->childFamilies()->first() : null, 'generations' => $generations - 1, 'spouses' => $spouses, 'marriages' => $marriages, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
             <?php endif ?>
         </div>
     </div>

@@ -4,7 +4,6 @@
 
 declare(strict_types=1);
 
-use Fisharebest\Webtrees\Date; #ESL!!!
 use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\Fact;
 use Fisharebest\Webtrees\Gedcom;
@@ -92,7 +91,7 @@ foreach ($family->facts(['MARR']) as $marriage) {
             <div class="wt-chart-box wt-chart-box-fact <?= $family->isPendingAddition() ? 'wt-new' : '' ?> <?= $family->isPendingDeletion() ? 'wt-old' : '' ?> overflow-hidden" data-wt-chart-xref="<?= e($family->xref()) ?>" data-tree="<?= e($family->tree()->name()) ?>">
                 <?php if ($family->canShow() && $family->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES')) : ?>
                     <div class="wt-chart-box-thumbnail float-start me-1">
-                        <?= view($module_name . '::chart-box-icon-only', ['gedcom' => $media, 'parent' => $marriage->tag(), 'tree' => $marriage->record()->tree()]) ?>
+                        <?= view($module_name . '::chart-box-icon-only', ['gedcom' => $media, 'parent' => $marriage->tag(), 'tree' => $marriage->record()->tree(), 'debug' => $debug]) ?>
                     </div>
                 <?php endif ?>
             
@@ -107,15 +106,16 @@ foreach ($family->facts(['MARR']) as $marriage) {
                             <div class="dropdown-menu dropdown-menu-end wt-chart-box-dropdown wt-chart-box-zoom-dropdown" style="position: inherit" aria-labelledby="#chart-box-zoom-<?= $id ?>">
                                 <hr/>
                                 <?php foreach ($all_facts as $fact) : ?>
-                                    <!--?php if($full_places != XXXXX) : ?-->
-                                        <?php $summaryStr = $fact->summary(); ?>
-                                        <?php $summaryPlace = $fact->place()->shortName(); ?>
-                                        <?php $fullPlace = $fact->place()->fullName(); ?>
-                                        <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
-                                        <?= str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
-                                    <!--?php else : ?-->
-                                        <!--?= $fact->summary() ?-->
-                                    <!--?php endif; ?-->
+                                    <?php $summaryStr = $fact->summary(); ?>
+                                    <?php $summaryPlace = $fact->place()->shortName(); ?>
+                                    <?php $fullPlace = $fact->place()->fullName(); ?>
+                                    <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
+                                    <?php if ($debug === $module::DEBUG_OPTION_PLACE_SUBSTITUTION) {
+                                        $module::debugMessage(/*$pPrefix*/ "\n1-\nss [$summaryStr]\nsp [$summaryPlace]\nfp [$fullPlace]\nfp2[<$formattedPlace]\nss2[" . str_replace($summaryPlace, $formattedPlace, $summaryStr) . "]", /*$pMsgLog*/ '', /*$pMsgStd*/ '', /*$pSuffix*/ '', /*$pToLog*/ false, /*$pToStd*/ false, /*pToJsConsole*/ true, /*$pWithTime*/ false);
+                                    }
+                                    ?>
+                                    <?php $summaryStr = str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
+                                    <?= $summaryStr ?>
                                 <?php endforeach ?>
                             </div>
                         </div>
@@ -125,12 +125,14 @@ foreach ($family->facts(['MARR']) as $marriage) {
                 <div class="wt-chart-box-facts">
                     <div class="wt-chart-box-fact small">
                     <?php $summaryStr = $marriage->summary(); ?>
-                    <!--?php if($full_places != XXXXX) : ?-->
-                        <?php $summaryPlace = $fact->place()->shortName(); ?>
-                        <?php $fullPlace = $fact->place()->fullName(); ?>
-                        <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
-                        <?php $summaryStr = str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
-                    <!--?php endif; ?-->
+                    <?php $summaryPlace = $fact->place()->shortName(); ?>
+                    <?php $fullPlace = $fact->place()->fullName(); ?>
+                    <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
+                    <?php if ($debug === $module::DEBUG_OPTION_PLACE_SUBSTITUTION) {
+                        $module::debugMessage(/*$pPrefix*/ "\n2-\nss [$summaryStr]\nsp [$summaryPlace]\nfp [$fullPlace]\nfp2[<$formattedPlace]\nss2[" . str_replace($summaryPlace, $formattedPlace, $summaryStr) . "]", /*$pMsgLog*/ '', /*$pMsgStd*/ '', /*$pSuffix*/ '', /*$pToLog*/ false, /*$pToStd*/ false, /*pToJsConsole*/ true, /*$pWithTime*/ false);
+                    }
+                    ?>
+                    <?php $summaryStr = str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
                     <?php if ($family->canShow()) : ?>
                         <a href="<?= e($family->url()) ?>"><?= $summaryStr ?></a>
                     <?php else : ?>
