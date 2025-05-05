@@ -751,7 +751,7 @@ function applyStyle(el) {
             <?= I18N::translate('Debug level') ?>
         </legend>
         <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/select', ['name' => 'debug', 'id' => 'debug', 'selected' => '-1', 'options' => ['-1' => /* I18N: A button label. */ I18N::translate('No debug'), '1' => /* I18N: A button label. */ I18N::translate('Place substitution debug')]]) ?>
+            <?= view('components/select', ['label' => I18N::translate('Debug level'), 'name' => 'debug', 'id' => 'debug', 'selected' => I18N::digits($debug), 'options' => $module->debugOptions()]) ?>
         </div>
         <div class="col-sm-9 wt-page-options-value">
         </div>

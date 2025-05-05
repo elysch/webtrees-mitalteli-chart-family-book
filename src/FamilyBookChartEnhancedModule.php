@@ -50,7 +50,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public ModuleService $module_service;
 
     public const CUSTOM_AUTHOR = 'elysch';
-    public const CUSTOM_VERSION = '1.5.0';
+    public const CUSTOM_VERSION = '1.5.1';
     public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
@@ -77,7 +77,8 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public const    DEFAULT_PLACES_FORMAT          = self::OPTION_FULL_PLACE_NAME;
 
     // DEBUG
-    const DEBUG_OPTION_PLACE_SUBSTITUTION = 1;
+    public const DEBUG_OPTION_NO_DEBUG = 0;
+    public const DEBUG_OPTION_PLACE_SUBSTITUTION = 1;
 
      /**
       *
@@ -91,11 +92,11 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     protected const DEFAULT_PARAMETERS             = [
         'book_size'     => self::DEFAULT_GENERATIONS,
         'generations'   => self::DEFAULT_DESCENDANT_GENERATIONS,
+        'places_format' => self::DEFAULT_PLACES_FORMAT,
         'spouses'       => true,
         'marriages'     => true,
-        'places_format' => self::DEFAULT_PLACES_FORMAT,
         'extra_images'  => true,
-        'debug'         => -1,
+        'debug'         => self::DEBUG_OPTION_NO_DEBUG,
     ];
 
     /**
@@ -241,10 +242,16 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function chartUrl(Individual $individual, array $parameters = []): string
     {
-        return route(static::class, [
+        $urlTmp = route(static::class, [
                 'xref' => $individual->xref(),
                 'tree' => $individual->tree()->name(),
             ] + $parameters + self::DEFAULT_PARAMETERS);
+
+            #$this::debugMessage(/*$pPrefix*/ "def: ", /*$pMsgLog*/ self::DEFAULT_PARAMETERS, /*$pMsgStd*/ '', /*$pSuffix*/ '', /*$pToLog*/ true, /*$pToStd*/ false, /*$pToJsConsole*/ false, /*$pWithTime*/ false);
+            #$this::debugMessage(/*$pPrefix*/ "parameters: ", /*$pMsgLog*/ $parameters, /*$pMsgStd*/ '', /*$pSuffix*/ '', /*$pToLog*/ true, /*$pToStd*/ false, /*$pToJsConsole*/ false, /*$pWithTime*/ false);
+            #$this::debugMessage(/*$pPrefix*/ "urlTmp: $urlTmp", /*$pMsgLog*/ null, /*$pMsgStd*/ '', /*$pSuffix*/ '', /*$pToLog*/ true, /*$pToStd*/ false, /*$pToJsConsole*/ false, /*$pWithTime*/ false);
+
+        return $urlTmp;
     }
 
     /**
@@ -365,6 +372,13 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         ];
     }
 
+    public function debugOptions() {
+        return [
+            self::DEBUG_OPTION_NO_DEBUG           => I18N::translate("No debug"),
+            self::DEBUG_OPTION_PLACE_SUBSTITUTION => I18N::translate("Place substitution debug"),
+        ];
+    }
+
     /**
      * @param ServerRequestInterface $request
      *
@@ -386,7 +400,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         $paper_orientation  = Validator::parsedBody($request)->string('paper_orientation', "");
         $ajax               = Validator::queryParams($request)->boolean('ajax', false);
 
-        $debug              = Validator::attributes($request)->isInArrayKeys([-1,1])->integer('debug');
+        $debug              = Validator::attributes($request)->isInArrayKeys($this->debugOptions())->integer('debug');
 
         #ini_set('log_errors_max_len','0');
 
@@ -414,9 +428,9 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
                 'marriages'     => Validator::parsedBody($request)->boolean('marriages', false),
                 'places_format' => Validator::parsedBody($request)->isInArrayKeys($this->abbrPlacesOptions())->integer('places_format'),
                 'extra_images'  => Validator::parsedBody($request)->boolean('extra_images', false),
-                'module_name'    => $this->name(),
+                'module_name'   => $this->name(),
                 'module'        => $this,
-                'debug'         => $debug,
+                'debug'         => Validator::parsedBody($request)->isInArrayKeys($this->debugOptions())->integer('debug'),
             ]));
         }
 
@@ -481,21 +495,26 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
 
     public static function debugMessage($pPrefix, $pMsgLog, $pMsgStd, $pSuffix, $pToLog, $pToStd, $pToJsConsole, $pWithTime) {
         $timeStr = '';
+        $msgLogStr = '';
         if ($pWithTime) {
             $t = microtime(true); $now = DateTime::createFromFormat('U.u', sprintf('%f', $t)); $now = $now->format("H:i:s.v");
             $timeStr = "-" . $now; usleep(1);
         }
-        if (!empty($pMsgLog)) $pMsgLog = "-".$pMsgLog;
-        if (!empty($pMsgStd)) $pMsgStd = "-".$pMsgStd;
-        if (!empty($pSuffix)) $pSuffix = "-".$pSuffix;
+        if (isset($pMsgLog)) $msgLogStr = "-" . print_r($pMsgLog, true);
+        if (!empty($pMsgStd)) $pMsgStd = "-" . $pMsgStd;
+        if (!empty($pSuffix)) $pSuffix = "-" . $pSuffix;
         if ($pToStd) {
             echo $pPrefix . $pMsgStd . $pSuffix . $timeStr;
         }
         if ($pToLog) {
-            error_log($pPrefix . print_r($pMsgLog, true) . $pSuffix . $timeStr . " | " . basename(dirname(debug_backtrace()[0]['file'])) . "/" . basename(debug_backtrace()[0]['file']) . ":" . debug_backtrace()[0]['line']);
+            error_log($pPrefix . $msgLogStr . $pSuffix . $timeStr . 
+                      " | " .  basename(dirname(debug_backtrace()[0]['file'])) . "/" . basename(debug_backtrace()[0]['file']) . 
+                      ":" . debug_backtrace()[0]['line']);
         }
         if ($pToJsConsole) {
-            echo "<script>console.log(" . json_encode( $pPrefix . print_r($pMsgLog, true) . $pSuffix . $timeStr . " | " . basename(dirname(debug_backtrace()[0]['file'])) . "/" . basename(debug_backtrace()[0]['file']) . ":" . debug_backtrace()[0]['line'] ) . ");</script>";
+            echo "<script>console.log(" . json_encode( $pPrefix  . $pSuffix . $timeStr . 
+                                      " | " . basename(dirname(debug_backtrace()[0]['file'])) . "/" . basename(debug_backtrace()[0]['file']) . 
+                                      ":" . debug_backtrace()[0]['line'] ) . ");</script>";
         }
     }
 

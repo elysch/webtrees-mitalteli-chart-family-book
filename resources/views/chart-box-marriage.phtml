@@ -111,7 +111,10 @@ foreach ($family->facts(['MARR']) as $marriage) {
                                     <?php $fullPlace = $fact->place()->fullName(); ?>
                                     <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
                                     <?php if ($debug === $module::DEBUG_OPTION_PLACE_SUBSTITUTION) {
-                                        $module::debugMessage(/*$pPrefix*/ "\n1-\nss [$summaryStr]\nsp [$summaryPlace]\nfp [$fullPlace]\nfp2[<$formattedPlace]\nss2[" . str_replace($summaryPlace, $formattedPlace, $summaryStr) . "]", /*$pMsgLog*/ '', /*$pMsgStd*/ '', /*$pSuffix*/ '', /*$pToLog*/ false, /*$pToStd*/ false, /*pToJsConsole*/ true, /*$pWithTime*/ false);
+                                        $module::debugMessage(/*$pPrefix*/ "\n1-\nss [$summaryStr]\nsp [$summaryPlace]\nfp [$fullPlace]\nfp2[<$formattedPlace]\nss2[" . 
+                                                              str_replace($summaryPlace, $formattedPlace, $summaryStr) . "]", 
+                                                              /*$pMsgLog*/ '', /*$pMsgStd*/ '', /*$pSuffix*/ '', 
+                                                              /*$pToLog*/ false, /*$pToStd*/ false, /*pToJsConsole*/ true, /*$pWithTime*/ false);
                                     }
                                     ?>
                                     <?php $summaryStr = str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>
@@ -125,11 +128,14 @@ foreach ($family->facts(['MARR']) as $marriage) {
                 <div class="wt-chart-box-facts">
                     <div class="wt-chart-box-fact small">
                     <?php $summaryStr = $marriage->summary(); ?>
-                    <?php $summaryPlace = $fact->place()->shortName(); ?>
-                    <?php $fullPlace = $fact->place()->fullName(); ?>
+                    <?php $summaryPlace = $marriage->place()->shortName(); ?>
+                    <?php $fullPlace = $marriage->place()->fullName(); ?>
                     <?php $formattedPlace = $module->getAbbreviatedPlace($fullPlace, $places_format); ?>
                     <?php if ($debug === $module::DEBUG_OPTION_PLACE_SUBSTITUTION) {
-                        $module::debugMessage(/*$pPrefix*/ "\n2-\nss [$summaryStr]\nsp [$summaryPlace]\nfp [$fullPlace]\nfp2[<$formattedPlace]\nss2[" . str_replace($summaryPlace, $formattedPlace, $summaryStr) . "]", /*$pMsgLog*/ '', /*$pMsgStd*/ '', /*$pSuffix*/ '', /*$pToLog*/ false, /*$pToStd*/ false, /*pToJsConsole*/ true, /*$pWithTime*/ false);
+                        $module::debugMessage(/*$pPrefix*/ "\n2-\nss [$summaryStr]\nsp [$summaryPlace]\nfp [$fullPlace]\nfp2[<$formattedPlace]\nss2[" . 
+                                              str_replace($summaryPlace, $formattedPlace, $summaryStr) . "]", 
+                                              /*$pMsgLog*/ '', /*$pMsgStd*/ '', /*$pSuffix*/ '', 
+                                              /*$pToLog*/ false, /*$pToStd*/ false, /*pToJsConsole*/ true, /*$pWithTime*/ false);
                     }
                     ?>
                     <?php $summaryStr = str_replace($summaryPlace, $formattedPlace, $summaryStr) ?>

@@ -15,9 +15,9 @@
     "Show marriages" => 'Mostrar matrimonios', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "Extra images" => 'Imágenes adicionales', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "Show extra images" => 'Mostrar imágenes adicionales', // resources\views\modules\mitalteli-family-book-chart\page.phtml
-    'Debug level' => 'Nivel de trazado (debug)', // modules/mitalteli-family-book-chart/page.phtml
-    'No debug' => 'Sing trazado (debug)', // modules/mitalteli-family-book-chart/page.phtml
-    'Place substitution debug' => 'Trazado de sustitución de lugar (debug)', // modules/mitalteli-family-book-chart/page.phtml
+    'Debug level' => 'Nivel de depuración (debug)', // modules/mitalteli-family-book-chart/page.phtml
+    'No debug' => 'Sin depuración (debug)', // modules/mitalteli-family-book-chart/page.phtml
+    'Place substitution debug' => 'Depuración de sustitución de lugar (debug)', // modules/mitalteli-family-book-chart/page.phtml
     "view" => 'ver', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "To generate a pdf you can use print function and select &quot;Save as PDF&quot;, then specify a scale percentage in &quot;more options&quot;. With Chrome and Edge browsers on Windows OS, 47&percnt; has worked fine for me when showing 5 generations horizontaly and setting landscape US Letter page." => 'Para generar un PDF, puede usar la función de impresión y seleccionar "Guardar como PDF". Luego, especifique un porcentaje de escala en "Más opciones". Con los navegadores Chrome y Edge en Windows, el 47&percent; me ha funcionado correctamente al mostrar 5 generaciones horizontalmente y configurar la página en formato Carta horizontal.', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "print" => 'imprimir', // resources\views\modules\mitalteli-family-book-chart\page.phtml
