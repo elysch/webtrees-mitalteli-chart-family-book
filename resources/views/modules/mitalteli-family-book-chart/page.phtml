@@ -17,6 +17,7 @@ use Fisharebest\Webtrees\Tree;
  * @var int        $minimum_generations
  * @var bool       $spouses
  * @var bool       $marriages
+ * @var bool       $divorces
  * @var bool       $places_format
  * @var bool       $extra_images
  * @var string     $title
@@ -740,6 +741,12 @@ function applyStyle(el) {
         </legend>
         <div class="col-sm-9 wt-page-options-value">
             <?= view('components/checkbox', ['label' => I18N::translate('Show marriages'), 'name' => 'marriages', 'checked' => $marriages]) ?>
+        </div>
+        <legend class="col-form-label col-sm-3 wt-page-options-label">
+            <?= I18N::translate('Divorces') ?>
+        </legend>
+        <div class="col-sm-9 wt-page-options-value">
+            <?= view('components/checkbox', ['label' => I18N::translate('Show divorces'), 'name' => 'divorces', 'checked' => $divorces]) ?>
         </div>
         <legend class="col-form-label col-sm-3 wt-page-options-label">
             <?= I18N::translate('Extra images') ?>

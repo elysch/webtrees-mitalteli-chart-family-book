@@ -50,11 +50,11 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public ModuleService $module_service;
 
     public const CUSTOM_AUTHOR = 'elysch';
-    public const CUSTOM_VERSION = '1.5.1';
+    public const CUSTOM_VERSION = '2.0.0';
     public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
-    protected const ROUTE_URL = '/tree/{tree}/mitalteli-family-book-{book_size}-{generations}-{places_format}-{spouses}-{marriages}-{extra_images}-{debug}/{xref}';
+    protected const ROUTE_URL = '/tree/{tree}/mitalteli-family-book-{book_size}-{generations}-{places_format}-{spouses}-{marriages}-{divorces}-{extra_images}-{debug}/{xref}';
 
     // Limits
     protected const MINIMUM_BOOK_SIZE = 2;
@@ -73,7 +73,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
 
     // Defaults
     public const    DEFAULT_GENERATIONS            = '3';
-    public const    DEFAULT_DESCENDANT_GENERATIONS = '6';
+    public const    DEFAULT_DESCENDANT_GENERATIONS = '8';
     public const    DEFAULT_PLACES_FORMAT          = self::OPTION_FULL_PLACE_NAME;
 
     // DEBUG
@@ -95,6 +95,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         'places_format' => self::DEFAULT_PLACES_FORMAT,
         'spouses'       => true,
         'marriages'     => true,
+        'divorces'      => true,
         'extra_images'  => true,
         'debug'         => self::DEBUG_OPTION_NO_DEBUG,
     ];
@@ -393,6 +394,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
         $generations        = Validator::attributes($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations');
         $spouses            = Validator::attributes($request)->boolean('spouses', false);
         $marriages          = Validator::attributes($request)->boolean('marriages', false);
+        $divorces           = Validator::attributes($request)->boolean('divorces', false);
         $places_format      = Validator::attributes($request)->isInArrayKeys($this->abbrPlacesOptions())->integer('places_format');
         $extra_images       = Validator::attributes($request)->boolean('extra_images', false);
         $hiddenprintcontent = Validator::parsedBody($request)->string('hiddenprintcontent', "");
@@ -426,6 +428,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
                 'generations'   => Validator::parsedBody($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations'),
                 'spouses'       => Validator::parsedBody($request)->boolean('spouses', false),
                 'marriages'     => Validator::parsedBody($request)->boolean('marriages', false),
+                'divorces'      => Validator::parsedBody($request)->boolean('divorces', false),
                 'places_format' => Validator::parsedBody($request)->isInArrayKeys($this->abbrPlacesOptions())->integer('places_format'),
                 'extra_images'  => Validator::parsedBody($request)->boolean('extra_images', false),
                 'module_name'   => $this->name(),
@@ -449,6 +452,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
                     'book_size'     => $book_size,
                     'spouses'       => $spouses,
                     'marriages'     => $marriages,
+                    'divorces'      => $divorces,
                     'places_format' => $places_format,
                     'extra_images'  => $extra_images,
                     'module_name'   => $this->name(),
@@ -464,6 +468,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'generations'   => $generations,
             'spouses'       => $spouses,
             'marriages'     => $marriages,
+            'divorces'      => $divorces,
             'places_format' => $places_format,
             'extra_images'  => $extra_images,
             'debug'         => $debug,
@@ -484,6 +489,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'module'              => $this,
             'spouses'             => $spouses,
             'marriages'           => $marriages,
+            'divorces'            => $divorces,
             'places_format'       => $places_format,
             'extra_images'        => $extra_images,
             'hiddenprintcontent'  => $hiddenprintcontent,

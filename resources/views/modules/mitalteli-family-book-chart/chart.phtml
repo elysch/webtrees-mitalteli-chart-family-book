@@ -13,6 +13,7 @@ use Illuminate\Support\Collection;
  * @var Individual $individual
  * @var bool       $spouses
  * @var bool       $marriages
+ * @var bool       $divorces
  * @var bool       $fullPlace
  * @var bool       $extra_images
  * @var String     $module_name
@@ -45,6 +46,9 @@ $children = $individual->spouseFamilies()->map(static function (Family $family):
                 <?php if ($spouses and $marriages) : ?>
                     <?= view($module_name . '::chart-box-marriage', ['family' => $family, 'places_format' => $places_format, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
                 <?php endif ?>
+                <?php if ($spouses and $divorces) : ?>
+                    <?= view($module_name . '::chart-box-divorce', ['family' => $family, 'places_format' => $places_format, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
+                <?php endif ?>
 
                 <?= view($module_name . '::chart-box', ['individual' => $family->spouse($individual), 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
             <?php endforeach ?>
@@ -53,12 +57,12 @@ $children = $individual->spouseFamilies()->map(static function (Family $family):
     <div class="wt-chart-horizontal-spacer">
         <div class="wt-chart-horizontal-line"></div>
     </div>
-    <?= view($module_name . '::modules/mitalteli-family-book-chart/parents', ['generations' => $book_size - 1, 'family' => $individual->childFamilies()->first(), 'spouses' => $spouses, 'marriages' => $marriages, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
+    <?= view($module_name . '::modules/mitalteli-family-book-chart/parents', ['generations' => $book_size - 1, 'family' => $individual->childFamilies()->first(), 'spouses' => $spouses, 'marriages' => $marriages, 'divorces' => $divorces, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ?>
 </div><!-- aa -->
 
 <?php if ($generations > 1) : ?><!-- bb -->
     <?php foreach ($children as $child) : ?>
         <hr class="wt-family-separator">
-        <?= view($module_name . '::modules/mitalteli-family-book-chart/chart', ['individual' => $child, 'generations' => $generations - 1, 'book_size' => $book_size, 'spouses' => $spouses, 'marriages' => $spouses and $marriages, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ; ?>
+        <?= view($module_name . '::modules/mitalteli-family-book-chart/chart', ['individual' => $child, 'generations' => $generations - 1, 'book_size' => $book_size, 'spouses' => $spouses, 'marriages' => $spouses and $marriages, 'divorces' => $spouses and $divorces, 'places_format' => $places_format, 'extra_images' => $extra_images, 'module_name' => $module_name, 'module' => $module, 'debug' => $debug]) ; ?>
     <?php endforeach ?><!-- bb -->
 <?php endif ?>

@@ -21,9 +21,12 @@ This module adds a chart of an individual’s ancestors and descendants, as a fa
    * City and country,
    * City and 2 letter country code,
    * City and 3 letter country code 
-* You can show spouses (with the first image to the left) or not.
-* You can show marriages (with the first image to the left) or not.
+* You can show spouses   or not.
+* You can show marriages or not.
+* You can show divorces  or not.
 * You can show extra images or not. These are shown to the right and correspond to the first image of each one of the following facts: Birth, Death, Burial.
+
+If the individual, marriage, or divorce has images, the report displays the first one inside its corresponding rectangle on the left side.
 
 Installation & upgrading
 ------------------------

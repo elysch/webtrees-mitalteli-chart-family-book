@@ -13,6 +13,8 @@
     "Show spouses" => 'Partner anzeigen', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     #"Marriages" => 'Matrimonios', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "Show marriages" => 'Heiraten anzeigen', // resources\views\modules\mitalteli-family-book-chart\page.phtml
+    #"Divorces" => 'Divorcios', // resources\views\modules\mitalteli-family-book-chart\page.phtml
+    "Show divorces" => 'Scheidungen anzeigen', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "Extra images" => 'Zusätzliche Bilder', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     "Show extra images" => 'Zusätzliche Bilder anzeigen', // resources\views\modules\mitalteli-family-book-chart\page.phtml
     'Debug level' => 'Debug level', // modules/mitalteli-family-book-chart/page.phtml
