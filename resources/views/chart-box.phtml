@@ -201,14 +201,14 @@ $id = Registry::idFactory()->id();
                 if ($extra_images and $individual->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES') and in_array($tag, Gedcom::BIRTH_EVENTS, true)) {
                     foreach ($individual->facts([$tag]) as $factIcon) {
                         if ($factIcon instanceof Fact and $factIcon->canShow()) {
-                            if (preg_match_all('/\n(2 OBJE\b.*(?:\n[^2].*)*)/', $eventIcon->gedcom(), $matches, PREG_SET_ORDER) > 0) {
+                            if (preg_match_all('/\n(2 OBJE\b.*(?:\n[^2].*)*)/', $factIcon->gedcom(), $matches, PREG_SET_ORDER) > 0) {
                                 $media = $matches[0][1];
                                 $arrayTmp = array(
                                     'media' => $media,
                                     'tag'   => $tag,
-                                    'tree'  => $eventIcon->record()->tree(),
+                                    'tree'  => $factIcon->record()->tree(),
                                 );
-                                $eventIconsArray[] = $arrayTmp;
+                                $factIconsArray[] = $arrayTmp;
                                 break;
                             }
                         }
