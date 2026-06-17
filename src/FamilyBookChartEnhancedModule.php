@@ -9,6 +9,7 @@ namespace Mitalteli\Webtrees\Chart\EnhancedFamilyBookChart;
 
 use \Datetime;
 
+use Aura\Router\RouterContainer;
 use Fisharebest\Webtrees\Module\AbstractModule;
 use Fisharebest\Webtrees\Module\ModuleChartInterface;
 use Fisharebest\Webtrees\Module\ModuleChartTrait;
@@ -50,7 +51,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public ModuleService $module_service;
 
     public const CUSTOM_AUTHOR = 'elysch';
-    public const CUSTOM_VERSION = '2.0.2';
+    public const CUSTOM_VERSION = '2.0.3';
     public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
@@ -107,9 +108,22 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function boot(): void
     {
-        Registry::routeFactory()->routeMap()
-            ->get(static::class, static::ROUTE_URL, $this)
-            ->allows(RequestMethodInterface::METHOD_POST);
+        if (version_compare(Webtrees::VERSION, '2.1.0', '>=')) {
+            Registry::routeFactory()->routeMap()
+                ->get(static::class, static::ROUTE_URL, $this)
+                ->allows(RequestMethodInterface::METHOD_POST);
+        } else {
+            $router_container = app(RouterContainer::class);
+
+            $router_container->getMap()
+                ->get(static::class, static::ROUTE_URL, $this)
+                ->allows(RequestMethodInterface::METHOD_POST)
+                ->tokens([
+                    'book_size'   => '\d+',
+                    'generations' => '\d+',
+                    'spouses'     => '1?',
+                ]);
+        }
 
         // Register a namespace for our views.
         View::registerNamespace($this->name(), $this->resourcesFolder() . 'views/');
