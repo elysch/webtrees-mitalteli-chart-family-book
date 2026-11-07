@@ -26,13 +26,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Fisharebest\Webtrees\Module\ModuleCustomInterface;
 use Fisharebest\Webtrees\Module\ModuleCustomTrait;
-use Fig\Http\Message\StatusCodeInterface;
-use Fisharebest\Webtrees\Report\ReportParserGenerate;
-use Fisharebest\Webtrees\Report\PdfRenderer;
 use Fisharebest\Webtrees\View;
 use Fisharebest\Webtrees\Webtrees;
 use Fisharebest\Webtrees\Services\ModuleService;
-use Fisharebest\Localization\Translation;
+use Fisharebest\Webtrees\Http\Exceptions\HttpNotFoundException;
 
 use function route;
 use function ob_get_clean;
@@ -51,10 +48,13 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public ModuleService $module_service;
 
     public const CUSTOM_AUTHOR = 'elysch';
-    public const CUSTOM_VERSION = '2.0.3';
+    public const CUSTOM_VERSION = '2.0.4';
     public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
+    // webtrees 2.3 replaced Aura.Router with its own router (and dropped fig/http-message-util).
+    protected const ROUTE_COLLECTION_CLASS = \Fisharebest\Webtrees\Http\Routing\RouteCollection::class;
+    protected const HTTP_METHOD_POST       = 'POST';
     protected const ROUTE_URL = '/tree/{tree}/mitalteli-family-book-{book_size}-{generations}-{places_format}-{spouses}-{marriages}-{divorces}-{extra_images}-{debug}/{xref}';
 
     // Limits
@@ -108,16 +108,23 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function boot(): void
     {
-        if (version_compare(Webtrees::VERSION, '2.1.0', '>=')) {
+        if (class_exists(self::ROUTE_COLLECTION_CLASS)) {
+            // webtrees 2.3+: the route name is the controller class, and the controller is
+            // resolved from the container. Custom modules are not created by the container,
+            // so register this (already named) instance; otherwise a fresh, unnamed one is made.
+            Registry::container()->set(static::class, $this);
+            // Our handle() method serves both GET and POST requests.
+            Registry::routeFactory()->routeMap()->add(static::ROUTE_URL, static::class);
+        } elseif (version_compare(Webtrees::VERSION, '2.1.0', '>=')) {
             Registry::routeFactory()->routeMap()
                 ->get(static::class, static::ROUTE_URL, $this)
-                ->allows(RequestMethodInterface::METHOD_POST);
+                ->allows(self::HTTP_METHOD_POST);
         } else {
             $router_container = app(RouterContainer::class);
 
             $router_container->getMap()
                 ->get(static::class, static::ROUTE_URL, $this)
-                ->allows(RequestMethodInterface::METHOD_POST)
+                ->allows(self::HTTP_METHOD_POST)
                 ->tokens([
                     'book_size'   => '\d+',
                     'generations' => '\d+',
@@ -428,13 +435,23 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
 
             $headers = ['content-type' => 'application/pdf'];
 
-            $pdf = file_get_contents("vendor/tecnickcom/tcpdf/examples/example_012.pdf");
+            // tecnickcom/tcpdf was replaced by tc-lib-pdf in webtrees 2.3, so this file may not exist.
+            $pdf_file = 'vendor/tecnickcom/tcpdf/examples/example_012.pdf';
 
-            return response($pdf, StatusCodeInterface::STATUS_OK, $headers);
+            if (!is_file($pdf_file)) {
+                throw new HttpNotFoundException();
+            }
+
+            $pdf = file_get_contents($pdf_file);
+
+            // webtrees 2.3 uses an HttpStatusCode enum, earlier versions use an int.
+            $status_ok = enum_exists(\Fisharebest\Webtrees\Enums\HttpStatusCode::class) ? \Fisharebest\Webtrees\Enums\HttpStatusCode::OK : 200;
+
+            return response($pdf, $status_ok, $headers);
         }
 
         // Convert POST requests into GET requests for pretty URLs.
-        if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
+        if ($request->getMethod() === self::HTTP_METHOD_POST) {
             return redirect(route(static::class, [
                 'tree'          => $tree->name(),
                 'xref'          => Validator::parsedBody($request)->isXref()->string('xref'),
@@ -445,8 +462,6 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
                 'divorces'      => Validator::parsedBody($request)->boolean('divorces', false),
                 'places_format' => Validator::parsedBody($request)->isInArrayKeys($this->abbrPlacesOptions())->integer('places_format'),
                 'extra_images'  => Validator::parsedBody($request)->boolean('extra_images', false),
-                'module_name'   => $this->name(),
-                'module'        => $this,
                 'debug'         => Validator::parsedBody($request)->isInArrayKeys($this->debugOptions())->integer('debug'),
             ]));
         }
@@ -547,9 +562,19 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function customTranslations(string $language): array
     {
+        // fisharebest/localization (Translation) was removed in webtrees 2.3.
+        // Our language files are plain PHP files returning an array, so just include them.
+        if (preg_match('/^[A-Za-z]{2,3}([_-][A-Za-z0-9]+)*$/', $language) !== 1) {
+            return [];
+        }
+
         $file = $this->resourcesFolder() . 'lang/' . $language . '.php';
 
-        return file_exists($file) ? (new Translation($file))->asArray() : [];
+        if (!is_file($file)) {
+            return [];
+        }
+        $translations = include $file;
+        return is_array($translations) ? $translations : [];
     }
 
     /**
