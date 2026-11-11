@@ -48,10 +48,13 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public ModuleService $module_service;
 
     public const CUSTOM_AUTHOR = 'elysch';
-    public const CUSTOM_VERSION = '2.0.4';
+    public const CUSTOM_VERSION = '2.0.5';
     public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
+
+    /** Sorts the module next to the author's other modules in the module list. */
+    private const TITLE_PREFIX = "\u{26EE} ";
     // webtrees 2.3 replaced Aura.Router with its own router (and dropped fig/http-message-util).
     protected const ROUTE_COLLECTION_CLASS = \Fisharebest\Webtrees\Http\Routing\RouteCollection::class;
     protected const HTTP_METHOD_POST       = 'POST';
@@ -156,7 +159,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public function title(): string
     {
         /* I18N: Name of a module/chart */
-        return I18N::translate('Enhanced family book');
+        return self::TITLE_PREFIX . I18N::translate('Enhanced family book');
     }
 
     /**
@@ -251,7 +254,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public function chartTitle(Individual $individual): string
     {
         /* I18N: %s is an individual’s name */
-        return I18N::translate('Enhanced family book of %s', $individual->fullName());
+        return self::TITLE_PREFIX . I18N::translate('Enhanced family book of %s', $individual->fullName());
     }
 
     /**
