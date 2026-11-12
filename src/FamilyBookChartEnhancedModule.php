@@ -53,8 +53,18 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
 
-    /** Sorts the module next to the author's other modules in the module list. */
-    private const TITLE_PREFIX = "\u{26EE} ";
+    /** Sorts the module next to the author's other modules in the module list.
+     * The prefix is added in a single place, customTranslations(), to the two titles below. Every place that
+     * translates them (title(), chartTitle(), the page header, the downloaded file names...) gets the prefix
+     * from there, in every language (also when the language has no translation and the English text is used). */
+    private const TITLE_PREFIX = "\u{26EE} "; # ⛮
+
+    /** Name of the module / chart. msgid of the translation that customTranslations() prefixes. */
+    public const CHART_TITLE = 'Enhanced family book';
+
+    /** Title of a chart instance (%s is an individual’s name). msgid that customTranslations() prefixes. */
+    public const CHART_TITLE_OF = 'Enhanced family book of %s';
+
     // webtrees 2.3 replaced Aura.Router with its own router (and dropped fig/http-message-util).
     protected const ROUTE_COLLECTION_CLASS = \Fisharebest\Webtrees\Http\Routing\RouteCollection::class;
     protected const HTTP_METHOD_POST       = 'POST';
@@ -158,8 +168,8 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function title(): string
     {
-        /* I18N: Name of a module/chart */
-        return self::TITLE_PREFIX . I18N::translate('Enhanced family book');
+        /* I18N: Name of a module/chart. The sorting prefix is injected by customTranslations() */
+        return I18N::translate(self::CHART_TITLE);
     }
 
     /**
@@ -253,8 +263,8 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function chartTitle(Individual $individual): string
     {
-        /* I18N: %s is an individual’s name */
-        return self::TITLE_PREFIX . I18N::translate('Enhanced family book of %s', $individual->fullName());
+        /* I18N: %s is an individual’s name. The sorting prefix is injected by customTranslations() */
+        return I18N::translate(self::CHART_TITLE_OF, $individual->fullName());
     }
 
     /**
@@ -565,19 +575,29 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function customTranslations(string $language): array
     {
+        $translations = [];
+
         // fisharebest/localization (Translation) was removed in webtrees 2.3.
         // Our language files are plain PHP files returning an array, so just include them.
-        if (preg_match('/^[A-Za-z]{2,3}([_-][A-Za-z0-9]+)*$/', $language) !== 1) {
-            return [];
+        // $language is validated before it is used to build a file path.
+        if (preg_match('/^[A-Za-z]{2,3}([_-][A-Za-z0-9]+)*$/', $language) === 1) {
+            $file = $this->resourcesFolder() . 'lang/' . $language . '.php';
+
+            if (is_file($file)) {
+                $included     = include $file;
+                $translations = is_array($included) ? $included : [];
+            }
         }
 
-        $file = $this->resourcesFolder() . 'lang/' . $language . '.php';
-
-        if (!is_file($file)) {
-            return [];
+        // The sorting prefix is added here, once, to every title of the module (also when the language
+        // has no translation of it and the English text is used, and also for languages without a file).
+        // The prefix has no "%" so it cannot alter the sprintf() format of CHART_TITLE_OF.
+        foreach ([self::CHART_TITLE, self::CHART_TITLE_OF] as $msgid) {
+            $title                = $translations[$msgid] ?? $msgid;
+            $translations[$msgid] = self::TITLE_PREFIX . (is_string($title) ? $title : $msgid);
         }
-        $translations = include $file;
-        return is_array($translations) ? $translations : [];
+
+        return $translations;
     }
 
     /**
