@@ -31,6 +31,9 @@ use Fisharebest\Webtrees\Tree;
     .row.mb-3.pdf_options { display: none; position: relative; z-index: 1; left: 10px; width: 100%; height: 100%; padding: 20px; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }
     .pdf_options_contents {  background-color: #fefefe; margin-left: 10px; padding: 20px; border: 1px solid #888; width: 90%; text-align: center;}
     .pdf_options_contents_inside {  text-align: center;}
+    /* Compact filter form. One rule for every webtrees version (Bootstrap 4 form-group / Bootstrap 5 mb-3 spacing differ). */
+    .wt-page-options-family-book-chart > .row, .wt-page-options-family-book-chart > fieldset { margin-bottom: .25rem; }
+    .wt-page-options-family-book-chart legend.col-form-label { margin-bottom: 0; }
 </style>
 
 <script id="fbk_tools_2" language="JavaScript" type="text/javascript" src="https://cdn.jsdelivr.net/gh/jquery/jquery-dist/dist/jquery.min.js"></script>
@@ -723,48 +726,73 @@ function applyStyle(el) {
         </div>
     </div>
 
-    <fieldset class="row mb-3">
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Places format') ?>
-        </legend>
-        <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/select', ['label' => I18N::translate('Places format'), 'name' => 'places_format', 'id' => 'places_format', 'selected' => I18N::digits($places_format), 'options' => $module->abbrPlacesOptions()]) ?>
-        </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Spouses') ?>
-        </legend>
-        <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/checkbox', ['label' => I18N::translate('Show spouses'), 'name' => 'spouses', 'checked' => $spouses]) ?>
-        </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Marriages') ?>
-        </legend>
-        <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/checkbox', ['label' => I18N::translate('Show marriages'), 'name' => 'marriages', 'checked' => $marriages]) ?>
-        </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Divorces') ?>
-        </legend>
-        <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/checkbox', ['label' => I18N::translate('Show divorces'), 'name' => 'divorces', 'checked' => $divorces]) ?>
-        </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Extra images') ?>
-        </legend>
-        <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/checkbox', ['label' => I18N::translate('Show extra images'), 'name' => 'extra_images', 'checked' => $extra_images]) ?>
-        </div>
-        <legend class="col-form-label col-sm-3 wt-page-options-label">
-            <?= I18N::translate('Debug level') ?>
-        </legend>
-        <div class="col-sm-9 wt-page-options-value">
-            <?= view('components/select', ['label' => I18N::translate('Debug level'), 'name' => 'debug', 'id' => 'debug', 'selected' => I18N::digits($debug), 'options' => $module->debugOptions()]) ?>
-        </div>
-        <div class="col-sm-9 wt-page-options-value">
+    <fieldset>
+        <div class="row">
+            <label class="col-form-label col-sm-3 wt-page-options-label" for="places_format">
+                <?= I18N::translate('Places format') ?>
+            </label>
+            <div class="col-sm-9 wt-page-options-value">
+                <?= view('components/select', ['label' => I18N::translate('Places format'), 'name' => 'places_format', 'id' => 'places_format', 'selected' => I18N::digits($places_format), 'options' => $module->abbrPlacesOptions()]) ?>
+            </div>
         </div>
     </fieldset>
 
-    <div class="row mb-3">
+    <fieldset>
+        <div class="row">
+            <legend class="col-form-label col-sm-3 wt-page-options-label">
+                <?= I18N::translate('Spouses') ?>
+            </legend>
+            <div class="col-sm-9 wt-page-options-value">
+                <?= view('components/checkbox', ['label' => I18N::translate('Show spouses'), 'name' => 'spouses', 'checked' => $spouses]) ?>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <div class="row">
+            <legend class="col-form-label col-sm-3 wt-page-options-label">
+                <?= I18N::translate('Marriages') ?>
+            </legend>
+            <div class="col-sm-9 wt-page-options-value">
+                <?= view('components/checkbox', ['label' => I18N::translate('Show marriages'), 'name' => 'marriages', 'checked' => $marriages]) ?>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <div class="row">
+            <legend class="col-form-label col-sm-3 wt-page-options-label">
+                <?= I18N::translate('Divorces') ?>
+            </legend>
+            <div class="col-sm-9 wt-page-options-value">
+                <?= view('components/checkbox', ['label' => I18N::translate('Show divorces'), 'name' => 'divorces', 'checked' => $divorces]) ?>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <div class="row">
+            <legend class="col-form-label col-sm-3 wt-page-options-label">
+                <?= I18N::translate('Extra images') ?>
+            </legend>
+            <div class="col-sm-9 wt-page-options-value">
+                <?= view('components/checkbox', ['label' => I18N::translate('Show extra images'), 'name' => 'extra_images', 'checked' => $extra_images]) ?>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <div class="row">
+            <label class="col-form-label col-sm-3 wt-page-options-label" for="debug">
+                <?= I18N::translate('Debug level') ?>
+            </label>
+            <div class="col-sm-9 wt-page-options-value">
+                <?= view('components/select', ['label' => I18N::translate('Debug level'), 'name' => 'debug', 'id' => 'debug', 'selected' => I18N::digits($debug), 'options' => $module->debugOptions()]) ?>
+            </div>
+        </div>
+    </fieldset>
+
+    <div class="row">
         <div class="col-sm-3 wt-page-options-label"></div>
         <div class="col-sm-9 wt-page-options-value">
             <input class="btn btn-primary" type="submit" value="<?= /* I18N: A button label. */ I18N::translate('view') ?>" onclick="embedCSS(document, true); submit(); ">
@@ -793,4 +821,4 @@ function applyStyle(el) {
     <?= csrf_field() ?>
 </form>
 
-<div class="wt-ajax-load wt-page-content wt-chart wt-chart-family-book" data-wt-ajax-url="<?= e($ajax_url) ?>"></div><!-- ajax -->
+<div class="wt-ajax-load wt-page-content wt-chart wt-chart-family-book" data-ajax-url="<?= e($ajax_url) ?>" data-wt-ajax-url="<?= e($ajax_url) ?>"></div><!-- ajax -->

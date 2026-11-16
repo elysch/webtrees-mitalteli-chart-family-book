@@ -48,7 +48,7 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
     public ModuleService $module_service;
 
     public const CUSTOM_AUTHOR = 'elysch';
-    public const CUSTOM_VERSION = '2.0.5';
+    public const CUSTOM_VERSION = '2.0.6';
     public const GITHUB_REPO = 'webtrees-mitalteli-chart-family-book';
     public const AUTHOR_WEBSITE = 'https://github.com/elysch/webtrees-mitalteli-chart-family-book/';
     public const CUSTOM_SUPPORT_URL = self::AUTHOR_WEBSITE . 'issues';
@@ -139,9 +139,14 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
                 ->get(static::class, static::ROUTE_URL, $this)
                 ->allows(self::HTTP_METHOD_POST)
                 ->tokens([
-                    'book_size'   => '\d+',
-                    'generations' => '\d+',
-                    'spouses'     => '1?',
+                    'book_size'     => '\d+',
+                    'generations'   => '\d+',
+                    'places_format' => '\d+',
+                    'spouses'       => '1?',
+                    'marriages'     => '1?',
+                    'divorces'      => '1?',
+                    'extra_images'  => '1?',
+                    'debug'         => '\d+',
                 ]);
         }
 
@@ -421,28 +426,30 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $tree               = Validator::attributes($request)->tree();
-        $user               = Validator::attributes($request)->user();
-        $xref               = Validator::attributes($request)->isXref()->string('xref');
-        $book_size          = Validator::attributes($request)->isBetween(self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE)->integer('book_size');
-        $generations        = Validator::attributes($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations');
-        $spouses            = Validator::attributes($request)->boolean('spouses', false);
-        $marriages          = Validator::attributes($request)->boolean('marriages', false);
-        $divorces           = Validator::attributes($request)->boolean('divorces', false);
-        $places_format      = Validator::attributes($request)->isInArrayKeys($this->abbrPlacesOptions())->integer('places_format');
-        $extra_images       = Validator::attributes($request)->boolean('extra_images', false);
-        $hiddenprintcontent = Validator::parsedBody($request)->string('hiddenprintcontent', "");
-        $paper_size         = Validator::parsedBody($request)->string('paper_size', "");
-        $paper_orientation  = Validator::parsedBody($request)->string('paper_orientation', "");
-        $ajax               = Validator::queryParams($request)->boolean('ajax', false);
-
-        $debug              = Validator::attributes($request)->isInArrayKeys($this->debugOptions())->integer('debug');
+        // webtrees 2.0.x has an older Validator (no attributes(), boolean(), isXref(), isInArrayKeys()...),
+        // so the parameters are read through readParameters(), which works with every supported version.
+        $tree               = $this->requestTree($request);
+        $user               = $this->requestUser($request);
+        $params             = $this->readParameters($request, 'attributes');
+        $xref               = $params['xref'];
+        $book_size          = $params['book_size'];
+        $generations        = $params['generations'];
+        $spouses            = $params['spouses'];
+        $marriages          = $params['marriages'];
+        $divorces           = $params['divorces'];
+        $places_format      = $params['places_format'];
+        $extra_images       = $params['extra_images'];
+        $debug              = $params['debug'];
+        $hiddenprintcontent = $this->optionalString($request, 'parsedBody', 'hiddenprintcontent');
+        $paper_size         = $this->optionalString($request, 'parsedBody', 'paper_size');
+        $paper_orientation  = $this->optionalString($request, 'parsedBody', 'paper_orientation');
+        $ajax               = $this->optionalBoolean($request, 'queryParams', 'ajax');
 
         #ini_set('log_errors_max_len','0');
 
         if (isset($hiddenprintcontent) and (strlen($hiddenprintcontent) > 0)) {
             $html_report_content=base64_decode($hiddenprintcontent);
-            $html_report_content=html_entity_decode($html_report_content, ENT_QUOTES ,'UTF-8'); # Revisar si hace falta o estorba
+            $html_report_content=html_entity_decode($html_report_content, ENT_QUOTES ,'UTF-8'); # TODO: check whether this decoding is needed or harmful
 
             require_once('FamilyBookChartEnhancedModuleGenPdf.php');
 
@@ -452,30 +459,32 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             $pdf_file = 'vendor/tecnickcom/tcpdf/examples/example_012.pdf';
 
             if (!is_file($pdf_file)) {
-                throw new HttpNotFoundException();
+                throw self::httpException('HttpNotFoundException');
             }
 
             $pdf = file_get_contents($pdf_file);
 
             // webtrees 2.3 uses an HttpStatusCode enum, earlier versions use an int.
-            $status_ok = enum_exists(\Fisharebest\Webtrees\Enums\HttpStatusCode::class) ? \Fisharebest\Webtrees\Enums\HttpStatusCode::OK : 200;
+            $status_ok = function_exists('enum_exists') && enum_exists(\Fisharebest\Webtrees\Enums\HttpStatusCode::class) ? \Fisharebest\Webtrees\Enums\HttpStatusCode::OK : 200;
 
             return response($pdf, $status_ok, $headers);
         }
 
         // Convert POST requests into GET requests for pretty URLs.
         if ($request->getMethod() === self::HTTP_METHOD_POST) {
+            $post = $this->readParameters($request, 'parsedBody');
+
             return redirect(route(static::class, [
                 'tree'          => $tree->name(),
-                'xref'          => Validator::parsedBody($request)->isXref()->string('xref'),
-                'book_size'     => Validator::parsedBody($request)->isBetween(self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE)->integer('book_size'),
-                'generations'   => Validator::parsedBody($request)->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations'),
-                'spouses'       => Validator::parsedBody($request)->boolean('spouses', false),
-                'marriages'     => Validator::parsedBody($request)->boolean('marriages', false),
-                'divorces'      => Validator::parsedBody($request)->boolean('divorces', false),
-                'places_format' => Validator::parsedBody($request)->isInArrayKeys($this->abbrPlacesOptions())->integer('places_format'),
-                'extra_images'  => Validator::parsedBody($request)->boolean('extra_images', false),
-                'debug'         => Validator::parsedBody($request)->isInArrayKeys($this->debugOptions())->integer('debug'),
+                'xref'          => $post['xref'],
+                'book_size'     => $post['book_size'],
+                'generations'   => $post['generations'],
+                'spouses'       => $post['spouses'],
+                'marriages'     => $post['marriages'],
+                'divorces'      => $post['divorces'],
+                'places_format' => $post['places_format'],
+                'extra_images'  => $post['extra_images'],
+                'debug'         => $post['debug'],
             ]));
         }
 
@@ -539,6 +548,225 @@ class EnhancedFamilyBookChartModule extends AbstractModule implements ModuleChar
             'tree'                => $tree,
             'debug'               => $debug,
         ]);
+    }
+
+    /**
+     * HTTP exceptions moved from Fisharebest\Webtrees\Exceptions (2.0.x) to Fisharebest\Webtrees\Http\Exceptions (2.1+).
+     *
+     * @param string $name Short class name, e.g. HttpBadRequestException
+     *
+     * @return \Throwable
+     */
+    private static function httpException(string $name, string $message = ''): \Throwable
+    {
+        foreach (['Fisharebest\\Webtrees\\Http\\Exceptions\\', 'Fisharebest\\Webtrees\\Exceptions\\'] as $namespace) {
+            $class = $namespace . $name;
+
+            if (class_exists($class)) {
+                return new $class($message);
+            }
+        }
+
+        return new \RuntimeException($message);
+    }
+
+    /**
+     * Does this webtrees version have the full Validator API this module uses (2.1+)?
+     * webtrees 2.0.x does not, and calling it there ends in "Call to undefined method".
+     */
+    private static function hasModernValidator(): bool
+    {
+        foreach (['attributes', 'boolean', 'isXref', 'isInArrayKeys', 'tree', 'user'] as $method) {
+            if (!method_exists(Validator::class, $method)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * New Validator for a source of request parameters (a fresh one each time: rules accumulate in the object).
+     *
+     * @param ServerRequestInterface $request
+     * @param string                 $source 'attributes', 'parsedBody' or 'queryParams'
+     */
+    private static function validatorFor(ServerRequestInterface $request, string $source): Validator
+    {
+        switch ($source) {
+            case 'attributes':
+                return Validator::attributes($request);
+            case 'parsedBody':
+                return Validator::parsedBody($request);
+            default:
+                return Validator::queryParams($request);
+        }
+    }
+
+    /**
+     * Raw parameters of a source, for webtrees versions whose Validator is too old.
+     *
+     * @return array<mixed>
+     */
+    private static function rawParameters(ServerRequestInterface $request, string $source): array
+    {
+        switch ($source) {
+            case 'attributes':
+                return $request->getAttributes();
+            case 'parsedBody':
+                return (array) $request->getParsedBody();
+            default:
+                return $request->getQueryParams();
+        }
+    }
+
+    /**
+     * The tree of the request (a route attribute).
+     */
+    private function requestTree(ServerRequestInterface $request): \Fisharebest\Webtrees\Tree
+    {
+        if (self::hasModernValidator()) {
+            return Validator::attributes($request)->tree();
+        }
+
+        $tree = $request->getAttribute('tree');
+
+        if ($tree instanceof \Fisharebest\Webtrees\Tree) {
+            return $tree;
+        }
+
+        throw self::httpException('HttpNotFoundException');
+    }
+
+    /**
+     * The user of the request (a request attribute set by webtrees).
+     */
+    private function requestUser(ServerRequestInterface $request): \Fisharebest\Webtrees\Contracts\UserInterface
+    {
+        if (self::hasModernValidator()) {
+            return Validator::attributes($request)->user();
+        }
+
+        $user = $request->getAttribute('user');
+
+        return $user instanceof \Fisharebest\Webtrees\Contracts\UserInterface ? $user : Auth::user();
+    }
+
+    /**
+     * Optional string parameter, '' when missing or not a string.
+     */
+    private function optionalString(ServerRequestInterface $request, string $source, string $name): string
+    {
+        if (self::hasModernValidator()) {
+            return self::validatorFor($request, $source)->string($name, '');
+        }
+
+        $value = self::rawParameters($request, $source)[$name] ?? '';
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * Optional boolean parameter, false when missing or not recognised.
+     */
+    private function optionalBoolean(ServerRequestInterface $request, string $source, string $name): bool
+    {
+        if (self::hasModernValidator()) {
+            return self::validatorFor($request, $source)->boolean($name, false);
+        }
+
+        return self::toBoolean(self::rawParameters($request, $source)[$name] ?? null);
+    }
+
+    /**
+     * Strict conversion to boolean: only the usual "true" spellings give true.
+     *
+     * @param mixed $value
+     */
+    private static function toBoolean($value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return is_string($value) && in_array(strtolower($value), ['1', 'on', 'true', 'yes'], true);
+    }
+
+    /**
+     * Read and validate every parameter of the chart, from the route (attributes) or from the POST body.
+     * With webtrees 2.1+ the native Validator does it. With 2.0.x (no such Validator methods) the same
+     * checks are done here: anything outside the allowed values is rejected with a 400 error (never coerced).
+     *
+     * @param ServerRequestInterface $request
+     * @param string                 $source 'attributes' or 'parsedBody'
+     *
+     * @return array{xref:string,book_size:int,generations:int,spouses:bool,marriages:bool,divorces:bool,places_format:int,extra_images:bool,debug:int}
+     */
+    private function readParameters(ServerRequestInterface $request, string $source): array
+    {
+        if (self::hasModernValidator()) {
+            $v = function () use ($request, $source): Validator {
+                return self::validatorFor($request, $source);
+            };
+
+            return [
+                'xref'          => $v()->isXref()->string('xref'),
+                'book_size'     => $v()->isBetween(self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE)->integer('book_size'),
+                'generations'   => $v()->isBetween(self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS)->integer('generations'),
+                'spouses'       => $v()->boolean('spouses', false),
+                'marriages'     => $v()->boolean('marriages', false),
+                'divorces'      => $v()->boolean('divorces', false),
+                'places_format' => $v()->isInArrayKeys($this->abbrPlacesOptions())->integer('places_format'),
+                'extra_images'  => $v()->boolean('extra_images', false),
+                'debug'         => $v()->isInArrayKeys($this->debugOptions())->integer('debug'),
+            ];
+        }
+
+        $raw = self::rawParameters($request, $source);
+
+        $xref = $raw['xref'] ?? null;
+
+        if (!is_string($xref) || preg_match('/^' . \Fisharebest\Webtrees\Gedcom::REGEX_XREF . '$/D', $xref) !== 1) {
+            throw self::httpException('HttpBadRequestException', 'xref');
+        }
+
+        return [
+            'xref'          => $xref,
+            'book_size'     => self::legacyInteger($raw, 'book_size', self::MINIMUM_BOOK_SIZE, self::MAXIMUM_BOOK_SIZE),
+            'generations'   => self::legacyInteger($raw, 'generations', self::MINIMUM_GENERATIONS, self::MAXIMUM_GENERATIONS),
+            'spouses'       => self::toBoolean($raw['spouses'] ?? null),
+            'marriages'     => self::toBoolean($raw['marriages'] ?? null),
+            'divorces'      => self::toBoolean($raw['divorces'] ?? null),
+            'places_format' => self::legacyInteger($raw, 'places_format', null, null, array_keys($this->abbrPlacesOptions())),
+            'extra_images'  => self::toBoolean($raw['extra_images'] ?? null),
+            'debug'         => self::legacyInteger($raw, 'debug', null, null, array_keys($this->debugOptions())),
+        ];
+    }
+
+    /**
+     * Integer parameter (only decimal digits), inside a range or among the allowed values.
+     *
+     * @param array<mixed>   $raw
+     * @param int|null       $min
+     * @param int|null       $max
+     * @param array<int>|null $allowed
+     */
+    private static function legacyInteger(array $raw, string $name, ?int $min, ?int $max, ?array $allowed = null): int
+    {
+        $value = $raw[$name] ?? null;
+
+        if (is_string($value) && ctype_digit($value) && strlen($value) <= 9) {
+            $value = (int) $value;
+        }
+
+        if (!is_int($value)
+            || ($min !== null && $value < $min)
+            || ($max !== null && $value > $max)
+            || ($allowed !== null && !in_array($value, $allowed, true))) {
+            throw self::httpException('HttpBadRequestException', $name);
+        }
+
+        return $value;
     }
 
     public static function debugMessage($pPrefix, $pMsgLog, $pMsgStd, $pSuffix, $pToLog, $pToStd, $pToJsConsole, $pWithTime) {

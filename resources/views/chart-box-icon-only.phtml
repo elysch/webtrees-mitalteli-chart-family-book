@@ -54,7 +54,7 @@ foreach ($keys as $key) {
     }
 }
 
-$emptyimg='<div class="pe-1 pb-1 wt-media-link-image"><div class="d-flex align-items-center wt-media-link"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" width="40" height="50" alt="" /></div></div>';
+$emptyimg='<div class="pe-1 pr-1 pb-1 wt-media-link-image"><div class="d-flex align-items-center wt-media-link"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" width="40" height="50" alt="" /></div></div>';
 ?>
 
 <?php if(empty($keys)) : ?>
@@ -76,7 +76,7 @@ foreach ($keys as $key) : ?>
 
                     $label = $media_file->displayImage(40, 50, 'crop', ['class' => 'wt-chart-box-thumbnail']);
         
-                    $label_html = '<div class="pe-1 pb-1 wt-media-link-image">' . $label . '</div>';
+                    $label_html = '<div class="pe-1 pr-1 pb-1 wt-media-link-image">' . $label . '</div>';
                     $value_html = '<div class="wt-media-link-title">' . '</div>';
 
                     echo '<div class="d-flex align-items-center wt-media-link">' . $label_html . $value_html . '</div>';

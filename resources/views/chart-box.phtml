@@ -112,7 +112,7 @@ if (class_exists(FactSortService::class)) {
 $all_facts = Fact::sortFacts($all_facts);
 }
 
-$id = Registry::idFactory()->id();
+$id = method_exists(Registry::class, 'idFactory') ? Registry::idFactory()->id() : bin2hex(random_bytes(8));
 // webtrees 2.3 returns a Sex enum from Individual::sex(); earlier versions return a string.
 $sex_code = $individual->sex();
 $sex_code = $sex_code instanceof \BackedEnum ? (string) $sex_code->value : (string) $sex_code;
@@ -120,21 +120,21 @@ $sex_code = $sex_code instanceof \BackedEnum ? (string) $sex_code->value : (stri
 
 <div class="wt-chart-box wt-chart-box-<?= strtolower($sex_code) ?> <?= $individual->isPendingAddition() ? 'wt-new' : '' ?> <?= $individual->isPendingDeletion() ? 'wt-old' : '' ?> overflow-hidden" data-wt-chart-xref="<?= e($individual->xref()) ?>" data-tree="<?= e($individual->tree()->name()) ?>"><!-- cc -->
     <?php if ($individual->canShow() && $individual->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES')) : ?>
-        <div class="wt-chart-box-thumbnail float-start me-1">
+        <div class="wt-chart-box-thumbnail float-start float-left me-1 mr-1">
             <?= $individual->displayImage(40, 50, 'crop', ['class' => 'wt-chart-box-thumbnail']) ?>
         </div>
     <?php endif ?>
 
     <?php if ($individual->canShow()) : ?>
-        <div class="wt-chart-box-extra d-print-none float-end ms-1">
+        <div class="wt-chart-box-extra d-print-none float-end float-right ms-1 ml-1">
             <div class="dropdown position-static wt-chart-box-zoom">
-                <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-zoom-<?= $id ?>" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-zoom-<?= $id ?>" data-bs-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <div ><?= view('icons/zoom-in') ?></div>
                     <div class="d-none"><?= view('icons/zoom-out') ?></div>
-                    <span class="visually-hidden"><?= I18N::translate('Links') ?></span>
+                    <span class="visually-hidden sr-only"><?= I18N::translate('Links') ?></span>
                 </a>
 
-                <div class="dropdown-menu dropdown-menu-end wt-chart-box-dropdown wt-chart-box-zoom-dropdown" style="position: inherit" aria-labelledby="#chart-box-zoom-<?= $id ?>">
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-right wt-chart-box-dropdown wt-chart-box-zoom-dropdown" style="position: inherit" aria-labelledby="#chart-box-zoom-<?= $id ?>">
                     <?php foreach ($all_facts as $fact) : ?>
                         <?php $summaryStr = $fact->summary(); ?>
                         <?php $summaryPlace = $fact->place()->shortName(); ?>
@@ -147,12 +147,12 @@ $sex_code = $sex_code instanceof \BackedEnum ? (string) $sex_code->value : (stri
             </div>
 
             <div class="dropdown position-static wt-chart-box-links">
-                <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-menu-<?= $id ?>" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-menu-<?= $id ?>" data-bs-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <i class="icon-pedigree" title="<?= I18N::translate('Links') ?>"></i>
-                    <span class="visually-hidden"><?= I18N::translate('Links') ?></span>
+                    <span class="visually-hidden sr-only"><?= I18N::translate('Links') ?></span>
                 </a>
 
-                <div class="dropdown-menu dropdown-menu-end wt-chart-box-dropdown wt-chart-box-links-dropdown" style="position: inherit" aria-labelledby="#chart-box-menu-<?= $id ?>">
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-right wt-chart-box-dropdown wt-chart-box-links-dropdown" style="position: inherit" aria-labelledby="#chart-box-menu-<?= $id ?>">
                     <?php foreach ($menus as $menu) : ?>
                         <a class="dropdown-item p-1 <?= e($menu->getClass()) ?>" href="<?= e($menu->getLink()) ?>">
                             <?= $menu->getLabel() ?>
@@ -301,9 +301,9 @@ $sex_code = $sex_code instanceof \BackedEnum ? (string) $sex_code->value : (stri
     ?>
 
         <?php if ($extra_images) : ?>
-            <div class="wt-chart-box-thumbnail float-end me-1">
+            <div class="wt-chart-box-thumbnail float-end float-right me-1 mr-1">
             <?php foreach ($factIconsArray as $iconElement) : ?>
-                <div class="wt-chart-box-thumbnail float-start me-1">
+                <div class="wt-chart-box-thumbnail float-start float-left me-1 mr-1">
                     <?= view($module_name . '::chart-box-icon-only', ['gedcom' => $iconElement['media'], 'parent' => $iconElement['tag'], 'tree' => $iconElement['tree']]) ?>
                 </div>
             <?php endforeach ?>

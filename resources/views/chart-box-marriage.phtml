@@ -84,26 +84,26 @@ foreach ($family->facts(['MARR']) as $marriage) {
             /** @var Collection|Fact[] $all_facts */
             $all_facts = $family->facts();
             
-            $id = Registry::idFactory()->id();
+            $id = method_exists(Registry::class, 'idFactory') ? Registry::idFactory()->id() : bin2hex(random_bytes(8));
 
 ?>
 
             <div class="wt-chart-box wt-chart-box-fact <?= $family->isPendingAddition() ? 'wt-new' : '' ?> <?= $family->isPendingDeletion() ? 'wt-old' : '' ?> overflow-hidden" data-wt-chart-xref="<?= e($family->xref()) ?>" data-tree="<?= e($family->tree()->name()) ?>">
                 <?php if ($family->canShow() && $family->tree()->getPreference('SHOW_HIGHLIGHT_IMAGES')) : ?>
-                    <div class="wt-chart-box-thumbnail float-start me-1">
+                    <div class="wt-chart-box-thumbnail float-start float-left me-1 mr-1">
                         <?= view($module_name . '::chart-box-icon-only', ['gedcom' => $media, 'parent' => $marriage->tag(), 'tree' => $marriage->record()->tree(), 'debug' => $debug]) ?>
                     </div>
                 <?php endif ?>
             
                 <?php if ($family->canShow()) : ?>
-                    <div class="wt-chart-box-extra d-print-none float-end ms-1">
+                    <div class="wt-chart-box-extra d-print-none float-end float-right ms-1 ml-1">
                         <div class="dropdown position-static wt-chart-box-zoom">
-                            <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-zoom-<?= $id ?>" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="wt-chart-box-icon" href="#" role="button" id="chart-box-zoom-<?= $id ?>" data-bs-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <div ><?= view('icons/zoom-in') ?></div>
                                 <div class="d-none"><?= view('icons/zoom-out') ?></div>
-                                <span class="visually-hidden"><?= I18N::translate('Links') ?></span>
+                                <span class="visually-hidden sr-only"><?= I18N::translate('Links') ?></span>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-end wt-chart-box-dropdown wt-chart-box-zoom-dropdown" style="position: inherit" aria-labelledby="#chart-box-zoom-<?= $id ?>">
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-right wt-chart-box-dropdown wt-chart-box-zoom-dropdown" style="position: inherit" aria-labelledby="#chart-box-zoom-<?= $id ?>">
                                 <hr/>
                                 <?php foreach ($all_facts as $fact) : ?>
                                     <?php $summaryStr = $fact->summary(); ?>
